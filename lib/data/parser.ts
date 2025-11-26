@@ -8,22 +8,22 @@ import {
  * Configuration for each file type - defines how to extract data
  */
 const FILE_CONFIGS = {
-  liked_comments: {
-    keywords: ['liked_comment', 'likes_media_likes'],
-    dataPath: ['likes_media_likes'],
+  liked_posts: {
+  keywords: ['liked', 'post'], 
+  dataPath: ['likes_media_likes'],
     parse: (item: any) => ({
       link: item.string_list_data?.[0]?.href || '',
-      type: item.string_list_data?.[0]?.href?.includes('/reel/') ? 'reel' : 'post',
+      author: item.title || '',
       timestamp: item.timestamp || item.string_list_data?.[0]?.timestamp || 0
     })
   },
   
-  liked_posts: {
-    keywords: ['liked', 'post'],
+  liked_comments: {
+    keywords: ['liked', 'comment'], 
     dataPath: ['likes_media_likes'],
     parse: (item: any) => ({
       link: item.string_list_data?.[0]?.href || '',
-      author: item.title || '',
+      type: item.string_list_data?.[0]?.href?.includes('/reel/') ? 'reel' : 'post',
       timestamp: item.timestamp || item.string_list_data?.[0]?.timestamp || 0
     })
   },
@@ -32,58 +32,60 @@ const FILE_CONFIGS = {
     keywords: ['profile_search', 'searches_user'],
     dataPath: ['searches_user'],
     parse: (item: any) => ({
-      author: item.string_map_data?.Search?.value || '',
-      profileLink: item.string_map_data?.Profile?.href || '',
-      timestamp: item.timestamp || 0
+      author: item.title || '',  // ← FIX: Use 'title' not Search.value
+      profileLink: item.string_list_data?.[0]?.href || '',
+      timestamp: item.string_list_data?.[0]?.timestamp || 0
     })
   },
-  
+    
   link_history: {
     keywords: ['link', 'history'],
     dataPath: ['ig_custom_link_history'],
     parse: (item: any) => ({
-      url: item.string_map_data?.Link?.value || item.url || '',
-      timestamp: item.timestamp
+      url: item.label_values?.[0]?.value || '',  // ← FIX: Use label_values
+      timestamp: item.timestamp || 0
     })
   },
-  
+
   following: {
     keywords: ['following'],
     dataPath: ['relationships_following'],
     parse: (item: any) => ({
-      author: item.string_list_data?.[0]?.value || '',
+      author: item.title || '',  // ← FIX: Use 'title' not value
       profileLink: item.string_list_data?.[0]?.href || '',
-      timestamp: item.timestamp || item.string_list_data?.[0]?.timestamp || 0
+      timestamp: item.string_list_data?.[0]?.timestamp || 0
     })
   },
-  
+
   videos_watched: {
     keywords: ['video', 'watched'],
     dataPath: ['impressions_history_videos_watched'],
     parse: (item: any) => ({
       author: item.string_map_data?.Author?.value || '',
       title: item.string_map_data?.['Video Title']?.value,
-      timestamp: item.timestamp || 0
+      timestamp: item.string_map_data?.Time?.timestamp || 0  // ← FIX: Use Time.timestamp
     })
   },
-  
+
   place_searches: {
     keywords: ['place', 'search'],
     dataPath: ['searches_place'],
     parse: (item: any) => ({
       place: item.string_map_data?.Search?.value || '',
-      timestamp: item.timestamp || 0
+      timestamp: item.string_map_data?.Time?.timestamp || 0  // ← FIX: Use Time.timestamp
     })
   },
-  
+
   keyword_searches: {
     keywords: ['keyword', 'search'],
     dataPath: ['searches_keyword'],
     parse: (item: any) => ({
       keyword: item.string_map_data?.Search?.value || '',
-      timestamp: item.timestamp || 0
+      timestamp: item.string_map_data?.Time?.timestamp || 0  // ← FIX: Use Time.timestamp
     })
   },
+  
+
   
   recommended_topics: {
     keywords: ['recommended', 'topic'],
@@ -99,16 +101,16 @@ const FILE_CONFIGS = {
     dataPath: ['impressions_history_ads_seen'],
     parse: (item: any) => ({
       author: item.string_map_data?.Author?.value || '',
-      timestamp: item.timestamp || 0
+      timestamp: item.string_map_data?.Time?.timestamp || 0  // ← FIX: Use Time.timestamp
     })
   },
-  
+
   posts_viewed: {
     keywords: ['posts', 'viewed'],
     dataPath: ['impressions_history_posts_seen'],
     parse: (item: any) => ({
       author: item.string_map_data?.Author?.value || '',
-      timestamp: item.timestamp || 0
+      timestamp: item.string_map_data?.Time?.timestamp || 0  // ← FIX: Use Time.timestamp
     })
   }
 };
@@ -233,5 +235,5 @@ export function combineInstagramData(parsedFiles: ParsedFile[]): ParsedInstagram
     }
   }
   
-  return combined;  
+  return combined;
 }

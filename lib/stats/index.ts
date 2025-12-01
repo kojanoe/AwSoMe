@@ -7,6 +7,8 @@ import { analyzeVideos, VideoStats } from './videos';
 import { analyzeSearches, SearchStats } from './searches';
 import { analyzeTimeline, TimelineStats } from './timeline';
 import { calculateContentRatio, ContentRatioStats } from './contentRatio';
+import { calculateEngagementRatio, EngagementRatioStats } from './engagementRatio';
+
 
 /**
  * Combined statistics result
@@ -19,6 +21,7 @@ export interface Statistics {
   searches: SearchStats;
   timeline: TimelineStats;
   contentRatio: ContentRatioStats;
+  engagementRatio: EngagementRatioStats;
 }
 
 /**
@@ -26,7 +29,7 @@ export interface Statistics {
  */
 export function generateStatistics(
   store: InstagramDataStore,
-  modules: Array<keyof Statistics> = ['basic', 'followers', 'engagement', 'videos', 'searches', 'timeline', 'contentRatio']
+  modules: Array<keyof Statistics> = ['basic', 'followers', 'engagement', 'videos', 'searches', 'timeline', 'contentRatio', 'engagementRatio']
 ): Partial<Statistics> {
   const stats: Partial<Statistics> = {};
   
@@ -58,6 +61,10 @@ export function generateStatistics(
     stats.contentRatio = calculateContentRatio(store);
   }
   
+    if (modules.includes('engagementRatio') && store.hasLikedPosts() && store.hasFollowing()) {
+    stats.engagementRatio = calculateEngagementRatio(store);
+  }
+
   return stats;
 }
 
@@ -84,6 +91,7 @@ export { analyzeVideos } from './videos';
 export { analyzeSearches } from './searches';
 export { analyzeTimeline } from './timeline';
 export { calculateContentRatio } from './contentRatio';
+export { calculateEngagementRatio } from './engagementRatio';
 
 // Export types explicitly to avoid conflicts
 export type { BasicStats } from './basic';
@@ -93,3 +101,4 @@ export type { VideoStats } from './videos';
 export type { SearchStats } from './searches';
 export type { TimelineStats } from './timeline';
 export type { ContentRatioStats } from './contentRatio';
+export type { EngagementRatioStats } from './engagementRatio';

@@ -6,29 +6,30 @@
  * 
  * DEFINITIONS:
  * 
- * 1. TOTAL VIEWED CONTENT
+ * 1. TOTAL VIEWED CONTENT (DEDUPLICATED)
  *    - All posts viewed (posts_viewed)
  *    - All videos watched (videos_watched)
+ *    - All ads watched (ads_watched)
  * 
  * 2. INTENDED CONTENT
  *    Content from accounts you deliberately interacted with:
  *    - Accounts you follow (following)
  *    - Accounts you searched for (profile_searches)
  * 
- * 3. ADS
- *    - All ads watched (ads_watched)
- * 
- * 4. SUGGESTED CONTENT
+ * 3. SUGGESTED CONTENT
  *    Everything else that Instagram's algorithm showed you:
- *    - Total viewed - Intended - Ads = Suggested
+ *    - Posts & Videos - Intended = Suggested
+ * 
+ * 4. ADS
+ *    - All ads watched (ads_watched)
  * 
  * FORMULA:
  * --------
  * Total Viewed = posts_viewed + videos_watched + ads_watched
  * Intended = viewed content where author is in (following OR profile_searches)
- * Suggested = Posts & Videos - Intended
+ * Suggested = (posts_viewed + videos_watched) - Intended
  * Ads = ads_watched
-
+ * 
  * RATIOS:
  * -------
  * Intended Ratio = Intended / Total Viewed
@@ -73,41 +74,62 @@ export function calculateContentRatio(store: InstagramDataStore): ContentRatioSt
   following.forEach((f: Following) => intendedAuthors.add(f.author));
   profileSearches.forEach((s: ProfileSearch) => intendedAuthors.add(s.author));
 
-  // Combine all viewed content (posts + videos)
-  const allViewedContent = [...postsViewed, ...videosWatched];
+  // Create a Set of ads for quick lookup (author + timestamp)
+  const adsSet = new Set<string>();
+  adsWatched.forEach(ad => {
+    adsSet.add(`${ad.author}:${ad.timestamp}`);
+  });
 
-  // Categorize content
+  // Combine all content and deduplicate by author + timestamp
+  const allContent = new Map<string, { author: string; timestamp: number }>();
+  
+  [...postsViewed, ...videosWatched, ...adsWatched].forEach(item => {
+    const key = `${item.author}:${item.timestamp}`;
+    if (!allContent.has(key)) {
+      allContent.set(key, { author: item.author, timestamp: item.timestamp });
+    }
+  });
+
+  // Categorize each unique item
   let intendedCount = 0;
   let suggestedCount = 0;
+  let adsCount = 0;
 
-  allViewedContent.forEach(content => {
-    if (intendedAuthors.has(content.author)) {
+  allContent.forEach((item, key) => {
+    // Priority 1: Is it an ad?
+    if (adsSet.has(key)) {
+      adsCount++;
+    }
+    // Priority 2: Is it intended content?
+    else if (intendedAuthors.has(item.author)) {
       intendedCount++;
-    } else {
+    }
+    // Priority 3: It's suggested content
+    else {
       suggestedCount++;
     }
   });
 
   // Calculate totals
-  const totalViewed = allViewedContent.length + adsWatched.length;
+  const totalViewed = allContent.size;
 
   // Calculate ratios (all against Total Viewed)
   const intendedRatio = totalViewed > 0 ? intendedCount / totalViewed : 0;
   const suggestedRatio = totalViewed > 0 ? suggestedCount / totalViewed : 0;
-  const adsRatio = totalViewed > 0 ? adsWatched.length / totalViewed : 0;
+  const adsRatio = totalViewed > 0 ? adsCount / totalViewed : 0;
 
   return {
     totalViewed,
     intendedContent: intendedCount,
     suggestedContent: suggestedCount,
-    adsWatched: adsWatched.length,
+    adsWatched: adsCount,
     intendedRatio,
     suggestedRatio,
     adsRatio,
     breakdown: {
       intended: intendedCount,
       suggested: suggestedCount,
-      ads: adsWatched.length,
+      ads: adsCount,
     },
   };
 }

@@ -13,6 +13,9 @@
 # rawdata
 /data/
 
+# ui testing
+/app/test/
+
 # testing
 /coverage
 

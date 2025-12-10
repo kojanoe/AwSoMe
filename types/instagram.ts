@@ -94,21 +94,3 @@ export interface ParsedFile {
   error?: string;
   data?: any;
 }
-
-// Remove old Statistics interface and add this at the end:
-
-import { BasicStats } from '@/lib/stats/basic';
-import { FollowerStats } from '@/lib/stats/followers';
-import { EngagementStats } from '@/lib/stats/engagement';
-import { VideoStats } from '@/lib/stats/videos';
-import { SearchStats } from '@/lib/stats/searches';
-import { TimelineStats } from '@/lib/stats/timeline';
-
-export interface Statistics {
-  basic: BasicStats;
-  followers: FollowerStats;
-  engagement: EngagementStats;
-  videos: VideoStats;
-  searches: SearchStats;
-  timeline: TimelineStats;
-}

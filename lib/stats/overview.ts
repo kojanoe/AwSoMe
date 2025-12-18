@@ -10,7 +10,7 @@ import { InstagramDataStore } from '../data/dataStore';
 export interface OverviewStats {
   totalPostsViewed: number;
   totalVideosWatched: number;
-  totalAdsWatched: number;
+  totalAdsViewed: number;
   totalLikesGiven: number;
   totalCommentsLiked: number;
   dateRange: {
@@ -26,7 +26,7 @@ export function calculateOverview(store: InstagramDataStore): OverviewStats {
   return {
     totalPostsViewed: store.getPostsViewed().length,
     totalVideosWatched: store.getVideosWatched().length,
-    totalAdsWatched: store.getAdsWatched().length,
+    totalAdsViewed: store.getAdsViewed().length,
     totalLikesGiven: store.getLikedPosts().length,
     totalCommentsLiked: store.getLikedComments().length,
     dateRange: store.getDateRange(),

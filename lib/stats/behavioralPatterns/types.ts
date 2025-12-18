@@ -6,7 +6,7 @@ export const SESSION_GAP_SECONDS = 120; // 2 minutes
 export const BINGE_MIN_VIDEOS = 5; // Minimum videos to count as binge watching
 
 export interface Activity {
-  type: 'post_viewed' | 'video_watched' | 'ad_watched' | 'liked_post' | 'liked_comment' | 'profile_search' | 'keyword_search' | 'place_search';
+  type: 'post_viewed' | 'video_watched' | 'ad_viewed' | 'liked_post' | 'liked_comment' | 'profile_search' | 'keyword_search' | 'place_search';
   timestamp: number;
   author?: string;
   value?: string;

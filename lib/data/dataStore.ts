@@ -23,7 +23,6 @@ export class InstagramDataStore {
     return this.data.likedPosts;
   }
 
-
   getProfileSearches() {
     return this.data.profileSearches;
   }
@@ -52,8 +51,8 @@ export class InstagramDataStore {
     return this.data.recommendedTopics;
   }
 
-  getAdsWatched() {
-    return this.data.adsWatched;
+  getAdsViewed() {
+    return this.data.adsViewed;
   }
 
   getPostsViewed() {

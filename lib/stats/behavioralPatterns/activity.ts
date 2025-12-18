@@ -9,7 +9,7 @@ import {
   LikedComment,
   VideoWatched,
   PostViewed,
-  AdWatched,
+  AdViewed,
   ProfileSearch,
   KeywordSearch,
   PlaceSearch
@@ -42,10 +42,10 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getAdsWatched().forEach((ad: AdWatched) => {
+  store.getAdsViewed().forEach((ad: AdViewed) => {
     if (ad.timestamp > 0) {
       activities.push({
-        type: 'ad_watched',
+        type: 'ad_viewed',
         timestamp: ad.timestamp,
         author: ad.author,
       });

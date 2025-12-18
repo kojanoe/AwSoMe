@@ -58,7 +58,7 @@ export function calculateEngagementRatio(store: InstagramDataStore): EngagementR
   const profileSearches = store.getProfileSearches();
   const postsViewed = store.getPostsViewed();
   const videosWatched = store.getVideosWatched();
-  const adsWatched = store.getAdsWatched();
+  const adsViewed = store.getAdsViewed();
   const likedPosts = store.getLikedPosts();
 
   // Create set of intended authors (following + searched)
@@ -69,7 +69,7 @@ export function calculateEngagementRatio(store: InstagramDataStore): EngagementR
   // Create a Set of ads for quick lookup (author + timestamp)
   const adsSet = new Set<string>();
   const adsList: Array<{ author: string; timestamp: number }> = [];
-  adsWatched.forEach(ad => {
+  adsViewed.forEach(ad => {
     const key = `${ad.author}:${ad.timestamp}`;
     adsSet.add(key);
     adsList.push({ author: ad.author, timestamp: ad.timestamp });
@@ -78,7 +78,7 @@ export function calculateEngagementRatio(store: InstagramDataStore): EngagementR
   // Combine all content and deduplicate
   const allContent = new Map<string, { author: string; timestamp: number; isAd: boolean }>();
   
-  [...postsViewed, ...videosWatched, ...adsWatched].forEach(item => {
+  [...postsViewed, ...videosWatched, ...adsViewed].forEach(item => {
     const key = `${item.author}:${item.timestamp}`;
     if (!allContent.has(key)) {
       allContent.set(key, { 

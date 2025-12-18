@@ -47,7 +47,7 @@ export interface RecommendedTopic {
   topic: string;
 }
 
-export interface AdWatched extends TimestampData {
+export interface AdViewed extends TimestampData {
   author: string;
 }
 
@@ -58,7 +58,7 @@ export interface PostViewed extends TimestampData {
 // Unified data structure
 export interface ParsedInstagramData {
   likedComments: LikedComment[];
-  likedPosts: LikedPost[];      // ← ADD THIS
+  likedPosts: LikedPost[];
   profileSearches: ProfileSearch[];
   linkHistory: LinkHistory[];
   following: Following[];
@@ -66,7 +66,7 @@ export interface ParsedInstagramData {
   placeSearches: PlaceSearch[];
   keywordSearches: KeywordSearch[];
   recommendedTopics: RecommendedTopic[];
-  adsWatched: AdWatched[];
+  adsViewed: AdViewed[];
   postsViewed: PostViewed[];
 }
 
@@ -79,9 +79,9 @@ export type DataFileType =
   | 'following'
   | 'videos_watched'
   | 'place_searches'
-  | 'keyword_searches'
+  | 'word_or_phrase_searches'
   | 'recommended_topics'
-  | 'ads_watched'
+  | 'ads_viewed'
   | 'posts_viewed'
   | 'unknown';
 

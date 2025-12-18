@@ -47,7 +47,7 @@ export interface ContentRatioStats {
   totalViewed: number;
   intendedContent: number;
   suggestedContent: number;
-  adsWatched: number;
+  adsViewed: number;
   intendedRatio: number;
   suggestedRatio: number;
   adsRatio: number;
@@ -66,7 +66,7 @@ export function calculateContentRatio(store: InstagramDataStore): ContentRatioSt
   const videosWatched = store.getVideosWatched();
   const following = store.getFollowing();
   const profileSearches = store.getProfileSearches();
-  const adsWatched = store.getAdsWatched();
+  const adsViewed = store.getAdsViewed();
 
   // Create a Set of intended authors (accounts you follow or searched for)
   const intendedAuthors = new Set<string>();
@@ -76,14 +76,14 @@ export function calculateContentRatio(store: InstagramDataStore): ContentRatioSt
 
   // Create a Set of ads for quick lookup (author + timestamp)
   const adsSet = new Set<string>();
-  adsWatched.forEach(ad => {
+  adsViewed.forEach(ad => {
     adsSet.add(`${ad.author}:${ad.timestamp}`);
   });
 
   // Combine all content and deduplicate by author + timestamp
   const allContent = new Map<string, { author: string; timestamp: number }>();
   
-  [...postsViewed, ...videosWatched, ...adsWatched].forEach(item => {
+  [...postsViewed, ...videosWatched, ...adsViewed].forEach(item => {
     const key = `${item.author}:${item.timestamp}`;
     if (!allContent.has(key)) {
       allContent.set(key, { author: item.author, timestamp: item.timestamp });
@@ -122,7 +122,7 @@ export function calculateContentRatio(store: InstagramDataStore): ContentRatioSt
     totalViewed,
     intendedContent: intendedCount,
     suggestedContent: suggestedCount,
-    adsWatched: adsCount,
+    adsViewed: adsCount,
     intendedRatio,
     suggestedRatio,
     adsRatio,

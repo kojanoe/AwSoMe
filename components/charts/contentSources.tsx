@@ -57,7 +57,7 @@ export function ContentSourcesChart({
             className="bg-chart-3 flex items-center justify-center text-sm font-medium text-white transition-all"
             style={{ width: `${safeAds}%` }}
           >
-            {safeAds > 10 && `${safeAds}%`}
+            {safeAds > 5 && `${safeAds}%`}
           </div>
         )}
       </div>

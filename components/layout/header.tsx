@@ -10,7 +10,7 @@ export default function Header() {
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="text-2xl font-bold text-foreground">
+          <div className="text-2xl font-bold text-primary">
             AwSoMe
           </div>
           

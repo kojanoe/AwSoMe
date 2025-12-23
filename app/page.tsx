@@ -1,7 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { FileUp, AlertCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,119 +8,28 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
-import { detectInstagramFiles, getRequiredFiles } from '@/lib/upload/fileDetection';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ConfirmDialog } from '@/components/shared/confirmDialog';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { useInstagramUpload } from '@/app/_hooks/use-instagram-upload';
+import { LoadingOverlay } from '@/components/shared/loadingOverlay';
 
 export default function HomePage() {
-  const router = useRouter();
-  const [files, setFiles] = useState<Map<string, File> | null>(null);
-  const [missingFiles, setMissingFiles] = useState<string[]>([]);
-  const [hasConsent, setHasConsent] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showMissingFilesDialog, setShowMissingFilesDialog] = useState(false);
-
-  const requiredFiles = getRequiredFiles();
-
-  const handleFolderSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-
-    const result = detectInstagramFiles(e.target.files);
-    
-    setFiles(result.matched);
-    setMissingFiles(result.missing);
-    setError(null);
-    setHasConsent(false);
-  };
-
-  const handleProcess = () => {
-    if (missingFiles.length > 0) {
-      setShowMissingFilesDialog(true);
-    } else {
-      processFiles();
-    }
-  };
-
-  const processFiles = async () => {
-    if (!files) return;
-
-    setIsProcessing(true);
-    setError(null);
-
-    try {
-      // Step 1: Read all files as JSON
-      const filesObject: Record<string, any> = {};
-      
-      for (const [filename, file] of files.entries()) {
-        const text = await file.text();
-        const json = JSON.parse(text);
-        filesObject[filename] = json;
-      }
-
-      // Step 2: Upload files
-      const uploadResponse = await fetch('/api/upload-files', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: filesObject })
-      });
-
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || 'Failed to upload files');
-      }
-
-      const uploadResult = await uploadResponse.json();
-      const sessionId = uploadResult.sessionId;
-
-      // Step 3: Generate data
-      const generateResponse = await fetch('/api/generate-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      });
-
-      if (!generateResponse.ok) {
-        const errorData = await generateResponse.json();
-        throw new Error(errorData.error || 'Failed to generate data');
-      }
-
-      // Step 4: Redirect to dashboard
-      router.push(`/test?user=${sessionId}`);
-
-    } catch (err) {
-      setError((err as Error).message);
-      setIsProcessing(false);
-    }
-  };
-
-  const getFileStatus = (filename: string): 'Ready' | 'Missing' => {
-    return files?.has(filename) ? 'Ready' : 'Missing';
-  };
+  const {
+    files,
+    missingFiles,
+    hasConsent,
+    setHasConsent,
+    isProcessing,
+    error,
+    showMissingFilesDialog,
+    setShowMissingFilesDialog,
+    requiredFiles,
+    handleFolderSelect,
+    handleProcess,
+    processFiles,
+    getFileStatus,
+  } = useInstagramUpload();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl min-h-screen">
@@ -166,7 +73,6 @@ export default function HomePage() {
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-chart-2 rounded-full" />
           
           <div className="pl-6">
-            {/* Standardized header - text-2xl font-bold */}
             <h2 className="text-2xl font-semibold">
               Instagram Insights
             </h2>
@@ -242,7 +148,6 @@ export default function HomePage() {
             {/* File list table */}
             <Card className="shadow-lg shadow-primary/5 border-primary/10">
               <CardHeader>
-                {/* Standardized CardTitle - same size as h2 sections */}
                 <CardTitle className="text-2xl">Detected Files ({files.size}/{requiredFiles.length})</CardTitle>
                 <CardDescription className="text-base">
                   Required Instagram data files for analysis
@@ -257,7 +162,7 @@ export default function HomePage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requiredFiles.map((filename) => {
+                    {requiredFiles.map((filename: string) => {
                       const status = getFileStatus(filename);
                       return (
                         <TableRow key={filename}>
@@ -287,7 +192,6 @@ export default function HomePage() {
             {/* Actions card */}
             <Card className="shadow-lg shadow-primary/5 border-primary/10">
               <CardHeader>
-                {/* Standardized CardTitle */}
                 <CardTitle className="text-2xl">Process Data</CardTitle>
                 <CardDescription className="text-base">Review and consent to continue</CardDescription>
               </CardHeader>
@@ -353,7 +257,6 @@ export default function HomePage() {
       <div className="mb-16">
         <Card className="shadow-lg shadow-primary/5 border-primary/10">
           <CardHeader>
-            {/* Standardized CardTitle */}
             <CardTitle className="text-2xl">Frequently Asked Questions</CardTitle>
             <CardDescription className="text-base">
               Common questions about using AwSoMe
@@ -383,39 +286,30 @@ export default function HomePage() {
       </div>
 
       {/* Missing files warning dialog */}
-      <AlertDialog open={showMissingFilesDialog} onOpenChange={setShowMissingFilesDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Missing Required Files</AlertDialogTitle>
-            <AlertDialogDescription>
-              Some required files are missing from your upload. Your insights may be incomplete or
-              inaccurate.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="mt-4 p-3 bg-muted rounded-md">
-            <p className="text-sm font-medium mb-2">Missing files:</p>
-            <ul className="text-sm space-y-1">
-              {missingFiles.map((file) => (
-                <li key={file} className="font-mono">
-                  {file}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="text-sm text-muted-foreground">Do you want to continue anyway?</p>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setShowMissingFilesDialog(false);
-                processFiles();
-              }}
-            >
-              Continue Anyway
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showMissingFilesDialog}
+        onOpenChange={setShowMissingFilesDialog}
+        onConfirm={() => {
+          setShowMissingFilesDialog(false);
+          processFiles();
+        }}
+        title="Missing Required Files"
+        description="Some required files are missing from your upload. Your insights may be incomplete or inaccurate."
+        confirmText="Continue Anyway"
+      >
+        <div className="mt-4 p-3 bg-muted rounded-md">
+          <p className="text-sm font-medium mb-2">Missing files:</p>
+          <ul className="text-sm space-y-1">
+            {missingFiles.map((file: string) => (
+              <li key={file} className="font-mono">
+                {file}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="text-sm text-muted-foreground">Do you want to continue anyway?</p>
+      </ConfirmDialog>
+      <LoadingOverlay isVisible={isProcessing} />
     </div>
   );
 }

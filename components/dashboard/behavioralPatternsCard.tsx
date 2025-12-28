@@ -134,6 +134,39 @@ export function BehavioralPatternsCard({ stats }: BehavioralPatternsCardProps) {
                 <p className="text-2xl font-semibold">{stats.bingeWatching.longestBingeDurationMinutes}m</p>
               </div>
             </div>
+            {stats.bingeWatching.top3BingeSessions && (
+              <div className="mt-8">
+                <h4 className="text-lg font-semibold mb-3">Top 3 Binge Sessions</h4>
+
+                <div className="space-y-3">
+                  {stats.bingeWatching.top3BingeSessions.map((binge, index) => {
+                    const midpoint = new Date(binge.midpointTime * 1000)
+                      .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+                    return (
+                      <div
+                        key={index}
+                        className="p-3 bg-muted rounded-lg flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="font-medium">#{index + 1} — {binge.videoCount} videos</p>
+                          <p className="text-sm text-muted-foreground">
+                            Duration: {binge.durationMinutes}m
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-sm font-medium">Midpoint</p>
+                          <p className="text-sm text-muted-foreground">{midpoint}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            
             {stats.bingeWatching.totalBingeSessions === 0 && (
               <p className="mt-4 text-sm text-muted-foreground">No binge watching sessions detected</p>
             )}

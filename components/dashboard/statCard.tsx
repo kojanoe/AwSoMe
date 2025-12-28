@@ -1,13 +1,10 @@
+import * as React from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Info } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface StatCardProps {
   title: string
@@ -15,11 +12,12 @@ interface StatCardProps {
   change?: number
   icon?: React.ReactNode
   tooltip?: string
+  className?: string
 }
 
-export function StatCard({ title, value, change, icon, tooltip }: StatCardProps) {
+export function StatCard({ title, value, change, icon, tooltip, className }: StatCardProps) {
   return (
-    <Card>
+    <Card className={cn("w-36 aspect-square shrink-0", className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
@@ -42,12 +40,11 @@ export function StatCard({ title, value, change, icon, tooltip }: StatCardProps)
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-foreground">{value}</div>
+
+      <CardContent className="flex flex-col gap-2">
+        <div className="text-2xl font-bold text-foreground leading-none">{value}</div>
         {change !== undefined && (
-          <Badge 
-            className={change > 0 ? "bg-brand-accent-gold" : "bg-brand-accent-coral"}
-          >
+          <Badge className={change > 0 ? "bg-brand-accent-gold" : "bg-brand-accent-coral"}>
             {change > 0 ? "+" : ""}{change}%
           </Badge>
         )}

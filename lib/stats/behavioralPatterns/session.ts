@@ -132,11 +132,28 @@ export function calculateBingeStats(bingeSessions: BingeSession[]) {
     ? bingeSessions.reduce((max, b) => b.videoCount > max.videoCount ? b : max, bingeSessions[0])
     : null;
 
+  // NEW: Top 3 binge sessions (sorted by video count)
+  const top3Binges = [...bingeSessions]
+    .sort((a, b) => b.videoCount - a.videoCount)
+    .slice(0, 3)
+    .map(b => ({
+      ...b,
+      midpointTime: Math.round((b.startTime + b.endTime) / 2)
+    }));
+
   return {
     totalBingeSessions: bingeSessions.length,
     longestBingeVideoCount: longestBinge ? longestBinge.videoCount : 0,
     longestBingeDurationMinutes: longestBinge ? longestBinge.durationMinutes : 0,
     averageBingeVideoCount: Math.round(averageBingeVideoCount * 10) / 10,
     bingeSessions,
+
+    // NEW: midpoint of *longest binge*
+    longestBingeMidpointTime: longestBinge
+      ? Math.round((longestBinge.startTime + longestBinge.endTime) / 2)
+      : null,
+
+    // NEW: top 3 binges with midpoint included
+    top3BingeSessions: top3Binges,
   };
 }

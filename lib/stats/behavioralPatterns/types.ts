@@ -50,6 +50,10 @@ export interface BehavioralPatternsStats {
     longestBingeDurationMinutes: number;
     averageBingeVideoCount: number;
     bingeSessions: BingeSession[];
+
+    // newly added fields
+    longestBingeMidpointTime: number | null;
+    top3BingeSessions: Array<BingeSession & { midpointTime: number }>;
   };
   searchBehavior: {
     totalSearches: number;

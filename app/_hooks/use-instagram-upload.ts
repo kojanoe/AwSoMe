@@ -81,7 +81,7 @@ export function useInstagramUpload() {
 
       // Step 4: Redirect to dashboard
       await new Promise(resolve => setTimeout(resolve, 4000));
-      router.push(`/test?user=${sessionId}`);
+      router.push(`/dashboard?user=${sessionId}`);
 
     } catch (err) {
       setError((err as Error).message);

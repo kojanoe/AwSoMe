@@ -210,6 +210,84 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
     }
   });
 
+  // Topics and Match Analysis
+  if (snapshot.topics.totalTopics > 0) {
+    chunks.push({
+      id: `${sessionId}-topics-overview`,
+      category: 'interests',
+      content: `Instagram recommended ${snapshot.topics.totalTopics} topics for you. ${snapshot.topics.matchAnalysis.matchPercentage}% of these topics (${snapshot.topics.matchAnalysis.totalMatched} topics) match your actual search behavior. ${snapshot.topics.matchAnalysis.matchedViaKeywords} topics matched your keyword searches, and ${snapshot.topics.matchAnalysis.matchedViaProfiles} matched profiles you searched for.`,
+      metadata: {
+        sessionId,
+        priority: 7,
+        keywords: ['topics', 'interests', 'recommended', 'algorithm', 'suggestions', 'match']
+      }
+    });
+
+    // Top matched topics
+    const matchedTopics = snapshot.topics.topTopics
+      .filter(t => t.matchedInSearches || t.matchedInProfiles)
+      .slice(0, 5)
+      .map(t => t.topic)
+      .join(', ');
+    
+    if (matchedTopics) {
+      chunks.push({
+        id: `${sessionId}-matched-topics`,
+        category: 'interests',
+        content: `Topics that match your behavior: ${matchedTopics}. These topics align with your searches.`,
+        metadata: {
+          sessionId,
+          priority: 6,
+          keywords: ['topics', 'matched', 'interests', 'accurate', 'aligned']
+        }
+      });
+    }
+
+    // Unmatched topics
+    if (snapshot.topics.unmatchedTopics.length > 0) {
+      const unmatchedList = snapshot.topics.unmatchedTopics.slice(0, 5).join(', ');
+      const remaining = snapshot.topics.unmatchedTopics.length > 5 
+        ? ` (and ${snapshot.topics.unmatchedTopics.length - 5} more)` 
+        : '';
+      chunks.push({
+        id: `${sessionId}-unmatched-topics`,
+        category: 'interests',
+        content: `Topics Instagram suggested but you never searched for: ${unmatchedList}${remaining}. These topics don't match your search behavior.`,
+        metadata: {
+          sessionId,
+          priority: 6,
+          keywords: ['topics', 'unmatched', 'algorithm', 'inaccurate', 'suggestions', 'mismatch']
+        }
+      });
+    }
+
+    // All topics list
+    const allTopicsList = snapshot.topics.topTopics
+      .map(t => t.topic)
+      .join(', ');
+    chunks.push({
+      id: `${sessionId}-all-topics`,
+      category: 'interests',
+      content: `Full list of recommended topics: ${allTopicsList}.`,
+      metadata: {
+        sessionId,
+        priority: 5,
+        keywords: ['topics', 'interests', 'list', 'all']
+      }
+    });
+  } else {
+    chunks.push({
+      id: `${sessionId}-no-topics`,
+      category: 'interests',
+      content: `No topic recommendations were found in your Instagram data.`,
+      metadata: {
+        sessionId,
+        priority: 3,
+        keywords: ['topics', 'interests', 'none']
+      }
+    });
+  }
+
   // Key Insights Summary
   chunks.push({
     id: `${sessionId}-highlights`,

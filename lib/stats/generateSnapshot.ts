@@ -11,6 +11,7 @@ import { calculateOverview } from './overview';
 import { calculateContentRatio } from './contentRatio';
 import { calculateEngagementRatio } from './engagementRatio';
 import { calculateBehavioralPatterns } from './behavioralPatterns';
+import { calculateTopics } from './topics';
 
 export function generateStatsSnapshot(
   store: InstagramDataStore,
@@ -21,6 +22,7 @@ export function generateStatsSnapshot(
   const contentRatio = calculateContentRatio(store);
   const engagement = calculateEngagementRatio(store);
   const behavioral = calculateBehavioralPatterns(store);
+  const topics = calculateTopics(store);
 
   // Calculate percentages
   const contentPercentages = {
@@ -52,6 +54,7 @@ export function generateStatsSnapshot(
     contentRatio,
     engagement,
     behavioral,
+    topics,
     insights: {
       highlights: {
         mostActiveHour: behavioral.activeHours.mostActiveHours[0] || 0,

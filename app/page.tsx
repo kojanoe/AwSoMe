@@ -81,21 +81,6 @@ export default function HomePage() {
               <p className="text-base text-muted-foreground leading-relaxed">
                 Upload your Instagram data export to discover your behavior:
               </p>
-              
-              {/* Feature list with modern styling */}
-              <div className="space-y-3">
-                {[
-                  'How much time you spend on Instagram',
-                  'Your most active hours and days',
-                ].map((feature, index) => (
-                  <div key={index} className="flex items-start gap-3 group">
-                    <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary group-hover:scale-150 transition-transform" />
-                    <p className="text-base text-muted-foreground group-hover:text-foreground transition-colors">
-                      {feature}
-                    </p>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -252,39 +237,6 @@ export default function HomePage() {
           </div>
         )}
       </div>
-
-      {/* Accordion Placeholder */}
-      <div className="mb-16">
-        <Card className="shadow-lg shadow-primary/5 border-primary/10">
-          <CardHeader>
-            <CardTitle className="text-2xl">Frequently Asked Questions</CardTitle>
-            <CardDescription className="text-base">
-              Common questions about using AwSoMe
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Accordion items */}
-            {[
-              'XX?',
-              'XX?',
-              'XX?'
-            ].map((question, index) => (
-              <div
-                key={index}
-                className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-base font-medium group-hover:text-primary transition-colors">
-                    {question}
-                  </p>
-                  <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Missing files warning dialog */}
       <ConfirmDialog
         open={showMissingFilesDialog}

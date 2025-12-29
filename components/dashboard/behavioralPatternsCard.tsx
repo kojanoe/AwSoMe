@@ -156,7 +156,6 @@ export function BehavioralPatternsCard({ stats }: BehavioralPatternsCardProps) {
                         </div>
 
                         <div className="text-right">
-                          <p className="text-sm font-medium">Midpoint</p>
                           <p className="text-sm text-muted-foreground">{midpoint}</p>
                         </div>
                       </div>

@@ -7,6 +7,23 @@ import { ContentRatioStats } from '@/lib/stats/contentRatio';
 import { EngagementRatioStats } from '@/lib/stats/engagementRatio';
 import { BehavioralPatternsStats } from '@/lib/stats/behavioralPatterns';
 
+export interface TopicsStats {
+  totalTopics: number;
+  topTopics: Array<{
+    topic: string;
+    matchedInSearches: boolean;
+    matchedInProfiles: boolean;
+  }>;
+  matchAnalysis: {
+    totalTopics: number;
+    matchedViaKeywords: number;
+    matchedViaProfiles: number;
+    totalMatched: number;
+    matchPercentage: number;
+  };
+  unmatchedTopics: string[];
+}
+
 export interface StatsSnapshot {
   // Metadata
   sessionId: string;
@@ -25,6 +42,7 @@ export interface StatsSnapshot {
   contentRatio: ContentRatioStats;
   engagement: EngagementRatioStats;
   behavioral: BehavioralPatternsStats;
+  topics: TopicsStats;
   
   // Insights - key findings from the data
   insights: {   

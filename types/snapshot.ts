@@ -1,11 +1,8 @@
-/**
- * Stats Snapshot Type Definition
- */
-
 import { OverviewStats } from '@/lib/stats/overview';
 import { ContentRatioStats } from '@/lib/stats/contentRatio';
 import { EngagementRatioStats } from '@/lib/stats/engagementRatio';
 import { BehavioralPatternsStats } from '@/lib/stats/behavioralPatterns';
+import { HourlyContentBreakdown, DailyContentBreakdown } from '@/lib/stats/timeBasedContent';
 
 export interface TopicsStats {
   totalTopics: number;
@@ -25,57 +22,51 @@ export interface TopicsStats {
 }
 
 export interface StatsSnapshot {
-  // Metadata
   sessionId: string;
-  generatedAt: number; // Unix timestamp
-  version: string; // For future compatibility (e.g., "1.0.0")
+  generatedAt: number;
+  version: string;
   
-  // Date range of the data
   dataRange: {
-    earliest: string | null; // ISO date string
-    latest: string | null;   // ISO date string
+    earliest: string | null;
+    latest: string | null;
     totalDays: number;
   };
   
-  // All calculated statistics
   overview: OverviewStats;
   contentRatio: ContentRatioStats;
   engagement: EngagementRatioStats;
   behavioral: BehavioralPatternsStats;
   topics: TopicsStats;
   
-  // Insights - key findings from the data
+  timeBasedContent: {
+    hourly: HourlyContentBreakdown[];
+    daily: DailyContentBreakdown[];
+  };
+  
   insights: {   
-    // Notable statistics
     highlights: {
-      mostActiveHour: number;      // 0-23
-      mostActiveDay: number;        // 0-6 (Sunday-Saturday)
+      mostActiveHour: number;
+      mostActiveDay: number;
       dominantContentSource: 'intended' | 'suggested' | 'ads';
       engagementLevel: 'low' | 'medium' | 'high';
       bingeWatchingRisk: 'low' | 'medium' | 'high';
+      peakIntendedHour: number;
+      peakSuggestedHour: number;
+      peakIntendedDay: number;
+      peakSuggestedDay: number;
     };
   };
   
-  // Aggregated safe data (no PII - no usernames, links, etc.)
   aggregates: {
-    // Time patterns
-    peakActivityHours: number[]; // Top 3 hours
-    peakActivityDays: number[];  // Top 3 days
-    
-    // Content consumption
+    peakActivityHours: number[];
+    peakActivityDays: number[];
     totalContentViewed: number;
     dailyAverageContent: number;
-    weekdayVsWeekendRatio: number; // weekday / weekend activity ratio
-    
-    // Engagement metrics
-    overallEngagementRate: number; // Total likes / Total viewed
-    likeFrequency: number;         // Likes per day
-    
-    // Session patterns
-    averageSessionCount: number;   // Sessions per day
-    typicalSessionLength: number;  // Minutes
-    
-    // Content source breakdown (percentages)
+    weekdayVsWeekendRatio: number;
+    overallEngagementRate: number;
+    likeFrequency: number;
+    averageSessionCount: number;
+    typicalSessionLength: number;
     contentSources: {
       intended: number;
       suggested: number;

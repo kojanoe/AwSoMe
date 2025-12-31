@@ -1,38 +1,33 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { createDataStore } from "@/lib/data/dataStore";
-import { calculateOverview } from "@/lib/stats/overview";
-import { calculateContentRatio, getContentRatioPercentages, getContentRatioSummary } from "@/lib/stats/contentRatio";
-import { calculateEngagementRatio, getEngagementPercentages, getEngagementSummary } from "@/lib/stats/engagementRatio";
-import { calculateBehavioralPatterns } from "@/lib/stats/behavioralPatterns";
 import { FloatingChat } from "@/components/chat/chatFloating";
-import { Download, Calendar, Info } from "lucide-react";
+import { Calendar, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActiveHoursChart } from "@/components/charts/activeHours";
 import { ActiveDaysChart } from "@/components/charts/activeDays";
 import { SearchDistributionChart } from "@/components/charts/searchDistribution";
-import { calculateTopics } from "@/lib/stats/topics";
 import { InterestsCard } from "@/components/dashboard/interestsCard";
 import { ExportButton } from '@/components/shared/exportButton';
-import fs from 'fs';
-import path from 'path';
-import type { ParsedInstagramData } from '@/types/instagram';
 import { ContentSourcesChart } from "@/components/charts/contentSources";
+import { StatsSnapshot } from '@/types/snapshot';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
-async function loadInstagramData(userId: string = '1'): Promise<ParsedInstagramData> {
-  const dataPath = path.join(
-    process.cwd(), 
-    'data', 
-    'generatedData', 
-    `structured-data-${userId}.json`
+async function loadSnapshot(userId: string): Promise<StatsSnapshot> {
+  const snapshotPath = join(
+    process.cwd(),
+    'data',
+    'generatedData',
+    `snapshot-${userId}.json`
   );
-  const fileContent = fs.readFileSync(dataPath, 'utf8');
+  const fileContent = await readFile(snapshotPath, 'utf8');
   return JSON.parse(fileContent);
 }
 
-function formatDate(date: Date | null): string {
-  if (!date) return 'N/A';
+function formatDate(dateString: string | null): string {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
     year: 'numeric', 
     month: 'short', 
@@ -48,24 +43,32 @@ export default async function DashboardPage({
   const params = await searchParams;
   const userId = params.user || '1';
   
-  const instagramData = await loadInstagramData(userId);
-  const store = createDataStore(instagramData);
+  const snapshot = await loadSnapshot(userId);
 
-  const overviewStats = calculateOverview(store);
-  const contentRatioStats = calculateContentRatio(store);
-  const engagementRatioStats = calculateEngagementRatio(store);
-  const behavioralStats = calculateBehavioralPatterns(store);
+  // Helper: Convert percentages back for chart
+  const contentPercentages = {
+    intended: snapshot.aggregates.contentSources.intended,
+    suggested: snapshot.aggregates.contentSources.suggested,
+    ads: snapshot.aggregates.contentSources.ads,
+  };
 
-  const contentPercentages = getContentRatioPercentages(contentRatioStats);
-  const contentSummary = getContentRatioSummary(contentRatioStats);
-  const engagementPercentages = getEngagementPercentages(engagementRatioStats);
-  const engagementSummary = getEngagementSummary(engagementRatioStats);
-  const topicsStats = calculateTopics(store);
+  // Helper: Calculate engagement percentages
+  const engagementPercentages = {
+    suggested: Math.round(snapshot.engagement.suggestedEngagement.engagementRate * 100),
+    ads: Math.round(snapshot.engagement.adsEngagement.engagementRate * 100),
+  };
 
+  // Helper: Generate engagement summary
+  const getEngagementSummary = () => {
+    const suggested = engagementPercentages.suggested;
+    if (suggested > 10) return `You engage frequently with suggested content (${suggested}% engagement rate)`;
+    if (suggested > 5) return `You moderately engage with suggested content (${suggested}% engagement rate)`;
+    return `You rarely engage with suggested content (${suggested}% engagement rate)`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Sticky Header with Glassmorphism */}
+      {/* Sticky Header */}
       <div className="sticky top-0 z-50 backdrop-blur-md bg-background/95 border-b border-border shadow-sm">
         <div className="container mx-auto px-4 py-4 max-w-7xl">
           <div className="flex items-center justify-between">
@@ -76,7 +79,7 @@ export default async function DashboardPage({
               <div className="flex items-center gap-2 mt-1">
                 <Calendar className="h-3 w-3 text-muted-foreground" />
                 <p className="text-xs text-muted-foreground">
-                  {formatDate(overviewStats.dateRange.earliest)} - {formatDate(overviewStats.dateRange.latest)}
+                  {formatDate(snapshot.dataRange.earliest)} - {formatDate(snapshot.dataRange.latest)}
                 </p>
                 {userId !== '1' && (
                   <Badge variant="outline" className="ml-2 text-xs">User {userId}</Badge>
@@ -86,17 +89,10 @@ export default async function DashboardPage({
             <div className="flex gap-2">
               <ExportButton 
                 type="dashboard"
-                data={{
-                    overview: overviewStats,
-                    contentRatio: contentRatioStats,
-                    contentPercentages: contentPercentages,
-                    engagementRatioStats: engagementRatioStats,
-                    engagementPercentages: engagementPercentages,
-                    behavioral: behavioralStats,
-                }}
+                data={snapshot}
                 variant="outline"
                 size="sm"
-                />
+              />
             </div>
           </div>
         </div>
@@ -107,36 +103,36 @@ export default async function DashboardPage({
         <section className="py-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <div className="text-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50 hover:border-primary/50 transition-all">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-chart-1 to-chart-1/60 bg-clip-text text-transparent">
-                {overviewStats.totalPostsViewed.toLocaleString()}
+              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+                {snapshot.overview.totalPostsViewed.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">Posts Viewed</div>
             </div>
 
             <div className="text-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50 hover:border-primary/50 transition-all">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-chart-2 to-chart-2/60 bg-clip-text text-transparent">
-                {overviewStats.totalVideosWatched.toLocaleString()}
+              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+                {snapshot.overview.totalVideosWatched.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">Videos Watched</div>
             </div>
 
             <div className="text-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50 hover:border-primary/50 transition-all">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-chart-3 to-chart-3/60 bg-clip-text text-transparent">
-                {overviewStats.totalAdsViewed.toLocaleString()}
+              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+                {snapshot.overview.totalAdsViewed.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">Ads Viewed</div>
             </div>
 
             <div className="text-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50 hover:border-primary/50 transition-all">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-chart-4 to-chart-4/60 bg-clip-text text-transparent">
-                {overviewStats.totalLikesGiven.toLocaleString()}
+              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+                {snapshot.overview.totalLikesGiven.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">Likes Given</div>
             </div>
 
             <div className="text-center p-4 rounded-xl bg-card/50 backdrop-blur border border-border/50 hover:border-primary/50 transition-all">
-              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-chart-5 to-chart-5/60 bg-clip-text text-transparent">
-                {overviewStats.totalCommentsLiked.toLocaleString()}
+              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-br from-primary to-primary/60 bg-clip-text text-transparent">
+                {snapshot.overview.totalCommentsLiked.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">Comments Liked</div>
             </div>
@@ -159,9 +155,9 @@ export default async function DashboardPage({
                 intended={contentPercentages.intended}
                 suggested={contentPercentages.suggested}
                 ads={contentPercentages.ads}
-                intendedCount={contentRatioStats.intendedContent}
-                suggestedCount={contentRatioStats.suggestedContent}
-                adsCount={contentRatioStats.adsViewed}
+                intendedCount={snapshot.contentRatio.intendedContent}
+                suggestedCount={snapshot.contentRatio.suggestedContent}
+                adsCount={snapshot.contentRatio.adsViewed}
               />
             </CardContent>
           </Card>
@@ -177,7 +173,7 @@ export default async function DashboardPage({
           <Card className="border-border/50 bg-card/50 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-lg">How You Engage With Content</CardTitle>
-              <CardDescription>{engagementSummary}</CardDescription>
+              <CardDescription>{getEngagementSummary()}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -206,11 +202,11 @@ export default async function DashboardPage({
                   <div className="pt-2 space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Viewed</span>
-                      <span className="font-medium">{engagementRatioStats.suggestedEngagement.totalViewed.toLocaleString()}</span>
+                      <span className="font-medium">{snapshot.engagement.suggestedEngagement.totalViewed.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Liked</span>
-                      <span className="font-medium">{engagementRatioStats.suggestedEngagement.totalLiked.toLocaleString()}</span>
+                      <span className="font-medium">{snapshot.engagement.suggestedEngagement.totalLiked.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -240,20 +236,14 @@ export default async function DashboardPage({
                   <div className="pt-2 space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Viewed</span>
-                      <span className="font-medium">{engagementRatioStats.adsEngagement.totalViewed.toLocaleString()}</span>
+                      <span className="font-medium">{snapshot.engagement.adsEngagement.totalViewed.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Liked</span>
-                      <span className="font-medium">{engagementRatioStats.adsEngagement.totalLiked.toLocaleString()}</span>
+                      <span className="font-medium">{snapshot.engagement.adsEngagement.totalLiked.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium">Note:</span> Engagement is tracked within a {engagementRatioStats.timeWindow / 60}-minute window after viewing content.
-                </p>
               </div>
             </CardContent>
           </Card>
@@ -290,7 +280,10 @@ export default async function DashboardPage({
                 </div>
               </CardHeader>
               <CardContent>
-                <ActiveHoursChart data={behavioralStats.activeHours.hourlyDistribution} />
+                <ActiveHoursChart 
+                  data={snapshot.behavioral.activeHours.hourlyDistribution}
+                  contentBreakdown={snapshot.timeBasedContent.hourly}
+                />
               </CardContent>
             </Card>
 
@@ -317,7 +310,10 @@ export default async function DashboardPage({
                 </div>
               </CardHeader>
               <CardContent>
-                <ActiveDaysChart data={behavioralStats.activeDays.dailyDistribution} />
+                <ActiveDaysChart 
+                  data={snapshot.behavioral.activeDays.dailyDistribution}
+                  contentBreakdown={snapshot.timeBasedContent.daily}
+                />
               </CardContent>
             </Card>
           </div>
@@ -357,28 +353,28 @@ export default async function DashboardPage({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Binge Sessions</p>
-                    <p className="text-3xl font-semibold">{behavioralStats.bingeWatching.totalBingeSessions}</p>
+                    <p className="text-3xl font-semibold">{snapshot.behavioral.bingeWatching.totalBingeSessions}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Longest Binge</p>
-                    <p className="text-3xl font-semibold">{behavioralStats.bingeWatching.longestBingeVideoCount}</p>
+                    <p className="text-3xl font-semibold">{snapshot.behavioral.bingeWatching.longestBingeVideoCount}</p>
                     <p className="text-xs text-muted-foreground">videos</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Avg Videos</p>
-                    <p className="text-2xl font-semibold">{behavioralStats.bingeWatching.averageBingeVideoCount}</p>
+                    <p className="text-2xl font-semibold">{snapshot.behavioral.bingeWatching.averageBingeVideoCount}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Max Duration</p>
-                    <p className="text-2xl font-semibold">{behavioralStats.bingeWatching.longestBingeDurationMinutes}m</p>
+                    <p className="text-2xl font-semibold">{snapshot.behavioral.bingeWatching.longestBingeDurationMinutes}m</p>
                   </div>
                 </div>
 
-                {behavioralStats.bingeWatching.top3BingeSessions && behavioralStats.bingeWatching.top3BingeSessions.length > 0 && (
+                {snapshot.behavioral.bingeWatching.top3BingeSessions && snapshot.behavioral.bingeWatching.top3BingeSessions.length > 0 && (
                   <div className="mt-6">
                     <h4 className="text-base font-semibold mb-3">Top 3 Binge Sessions</h4>
                     <div className="space-y-2">
-                      {behavioralStats.bingeWatching.top3BingeSessions.map((binge, index) => {
+                      {snapshot.behavioral.bingeWatching.top3BingeSessions.map((binge, index) => {
                         const midpoint = new Date(binge.midpointTime * 1000)
                           .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -405,7 +401,7 @@ export default async function DashboardPage({
                   </div>
                 )}
 
-                {behavioralStats.bingeWatching.totalBingeSessions === 0 && (
+                {snapshot.behavioral.bingeWatching.totalBingeSessions === 0 && (
                   <p className="mt-4 text-sm text-muted-foreground">No binge watching sessions detected</p>
                 )}
               </CardContent>
@@ -438,19 +434,19 @@ export default async function DashboardPage({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">Total Searches</p>
-                      <p className="text-3xl font-semibold">{behavioralStats.searchBehavior.totalSearches}</p>
+                      <p className="text-3xl font-semibold">{snapshot.behavioral.searchBehavior.totalSearches}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">Per Day</p>
-                      <p className="text-3xl font-semibold">{behavioralStats.searchBehavior.averageSearchesPerDay}</p>
+                      <p className="text-3xl font-semibold">{snapshot.behavioral.searchBehavior.averageSearchesPerDay}</p>
                     </div>
                   </div>
-                  {behavioralStats.searchBehavior.totalSearches > 0 && (
+                  {snapshot.behavioral.searchBehavior.totalSearches > 0 && (
                     <>
                       <SearchDistributionChart 
-                        profile={behavioralStats.searchBehavior.searchDistribution.profile}
-                        keyword={behavioralStats.searchBehavior.searchDistribution.keyword}
-                        place={behavioralStats.searchBehavior.searchDistribution.place}
+                        profile={snapshot.behavioral.searchBehavior.searchDistribution.profile}
+                        keyword={snapshot.behavioral.searchBehavior.searchDistribution.keyword}
+                        place={snapshot.behavioral.searchBehavior.searchDistribution.place}
                       />
                       <div className="space-y-2">
                         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -459,8 +455,8 @@ export default async function DashboardPage({
                             <span className="text-sm font-medium">Profile searches</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{behavioralStats.searchBehavior.profileSearchCount}</span>
-                            <Badge variant="secondary">{behavioralStats.searchBehavior.searchDistribution.profile}%</Badge>
+                            <span className="text-sm font-semibold">{snapshot.behavioral.searchBehavior.profileSearchCount}</span>
+                            <Badge variant="secondary">{snapshot.behavioral.searchBehavior.searchDistribution.profile}%</Badge>
                           </div>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -469,8 +465,8 @@ export default async function DashboardPage({
                             <span className="text-sm font-medium">Keyword searches</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{behavioralStats.searchBehavior.keywordSearchCount}</span>
-                            <Badge variant="secondary">{behavioralStats.searchBehavior.searchDistribution.keyword}%</Badge>
+                            <span className="text-sm font-semibold">{snapshot.behavioral.searchBehavior.keywordSearchCount}</span>
+                            <Badge variant="secondary">{snapshot.behavioral.searchBehavior.searchDistribution.keyword}%</Badge>
                           </div>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -479,8 +475,8 @@ export default async function DashboardPage({
                             <span className="text-sm font-medium">Place searches</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{behavioralStats.searchBehavior.placeSearchCount}</span>
-                            <Badge variant="secondary">{behavioralStats.searchBehavior.searchDistribution.place}%</Badge>
+                            <span className="text-sm font-semibold">{snapshot.behavioral.searchBehavior.placeSearchCount}</span>
+                            <Badge variant="secondary">{snapshot.behavioral.searchBehavior.searchDistribution.place}%</Badge>
                           </div>
                         </div>
                       </div>
@@ -491,9 +487,10 @@ export default async function DashboardPage({
             </Card>
           </div>
         </section>
+
         {/* Interests Section */}
         <section className="py-6 pb-20">
-          <InterestsCard stats={topicsStats} />
+          <InterestsCard stats={snapshot.topics} />
         </section>
 
       </div>

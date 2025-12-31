@@ -1,8 +1,6 @@
 /**
- * Stats Snapshot Generator
- * 
- * Generates a snapshot of pre-calculated statistics
- * Pure data only - no interpretations or recommendations
+ * COPY THIS FILE TO: lib/stats/generateSnapshot.ts
+ * REPLACE THE ENTIRE FILE
  */
 
 import { InstagramDataStore } from '../data/dataStore';
@@ -12,19 +10,21 @@ import { calculateContentRatio } from './contentRatio';
 import { calculateEngagementRatio } from './engagementRatio';
 import { calculateBehavioralPatterns } from './behavioralPatterns';
 import { calculateTopics } from './topics';
+import { calculateHourlyContentBreakdown, calculateDailyContentBreakdown } from './timeBasedContent';
 
 export function generateStatsSnapshot(
   store: InstagramDataStore,
   sessionId: string
 ): StatsSnapshot {
-  // Calculate all statistics
   const overview = calculateOverview(store);
   const contentRatio = calculateContentRatio(store);
   const engagement = calculateEngagementRatio(store);
   const behavioral = calculateBehavioralPatterns(store);
   const topics = calculateTopics(store);
+  
+  const hourlyBreakdown = calculateHourlyContentBreakdown(store);
+  const dailyBreakdown = calculateDailyContentBreakdown(store);
 
-  // Calculate percentages
   const contentPercentages = {
     intended: Math.round(contentRatio.intendedRatio * 100),
     suggested: Math.round(contentRatio.suggestedRatio * 100),
@@ -33,13 +33,17 @@ export function generateStatsSnapshot(
 
   const suggestedEngagementPercent = Math.round(engagement.suggestedEngagement.engagementRate * 100);
 
-  // Calculate aggregates
   const totalDays = calculateTotalDays(overview.dateRange.earliest, overview.dateRange.latest);
   const totalContentViewed = contentRatio.totalViewed;
   const weekdayVsWeekendRatio = calculateWeekdayWeekendRatio(behavioral.activeDays.dailyDistribution);
   const overallEngagementRate = totalContentViewed > 0
     ? overview.totalLikesGiven / totalContentViewed
     : 0;
+
+  const peakIntendedHour = findPeakHour(hourlyBreakdown, 'intended');
+  const peakSuggestedHour = findPeakHour(hourlyBreakdown, 'suggested');
+  const peakIntendedDay = findPeakDay(dailyBreakdown, 'intended');
+  const peakSuggestedDay = findPeakDay(dailyBreakdown, 'suggested');
 
   return {
     sessionId,
@@ -55,6 +59,10 @@ export function generateStatsSnapshot(
     engagement,
     behavioral,
     topics,
+    timeBasedContent: {
+      hourly: hourlyBreakdown,
+      daily: dailyBreakdown,
+    },
     insights: {
       highlights: {
         mostActiveHour: behavioral.activeHours.mostActiveHours[0] || 0,
@@ -62,6 +70,10 @@ export function generateStatsSnapshot(
         dominantContentSource: getDominantContentSource(contentPercentages),
         engagementLevel: getEngagementLevel(suggestedEngagementPercent),
         bingeWatchingRisk: getBingeWatchingRisk(behavioral.bingeWatching),
+        peakIntendedHour,
+        peakSuggestedHour,
+        peakIntendedDay,
+        peakSuggestedDay,
       },
     },
     aggregates: {
@@ -85,7 +97,6 @@ export function generateStatsSnapshot(
   };
 }
 
-// Helper functions
 function calculateTotalDays(earliest: Date | null, latest: Date | null): number {
   if (!earliest || !latest) return 0;
   const diffMs = latest.getTime() - earliest.getTime();
@@ -129,4 +140,36 @@ function calculateWeekdayWeekendRatio(dailyDistribution: Record<number, number>)
 
   if (weekendActivity === 0) return 0;
   return weekdayActivity / weekendActivity;
+}
+
+function findPeakHour(
+  breakdown: any[],
+  type: 'intended' | 'suggested' | 'ads'
+): number {
+  const key = type === 'intended' ? 'intentedPercent' : type === 'suggested' ? 'suggestedPercent' : 'adsPercent';
+  let maxPercent = 0;
+  let peakHour = 0;
+  breakdown.forEach(item => {
+    if (item[key] > maxPercent) {
+      maxPercent = item[key];
+      peakHour = item.hour;
+    }
+  });
+  return peakHour;
+}
+
+function findPeakDay(
+  breakdown: any[],
+  type: 'intended' | 'suggested' | 'ads'
+): number {
+  const key = type === 'intended' ? 'intentedPercent' : type === 'suggested' ? 'suggestedPercent' : 'adsPercent';
+  let maxPercent = 0;
+  let peakDay = 0;
+  breakdown.forEach(item => {
+    if (item[key] > maxPercent) {
+      maxPercent = item[key];
+      peakDay = item.day;
+    }
+  });
+  return peakDay;
 }

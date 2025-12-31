@@ -19,6 +19,10 @@ const REQUIRED_FILES = [
 
 interface UploadRequest {
   files: Record<string, any>;
+  dateRange?: {
+    start: number;
+    end: number;
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -27,7 +31,6 @@ export async function POST(request: NextRequest) {
   try {
     logs.push('Starting file upload...');
     
-    // Parse request body
     const body: UploadRequest = await request.json();
     
     if (!body.files || typeof body.files !== 'object') {
@@ -38,11 +41,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // Generate UUID for this session
     const sessionId = randomUUID();
     logs.push(`Generated session ID: ${sessionId}`);
     
-    // Create session folder
     const rawDataDir = path.join(process.cwd(), 'data', 'rawdata');
     const sessionDir = path.join(rawDataDir, sessionId);
     
@@ -54,7 +55,13 @@ export async function POST(request: NextRequest) {
     fs.mkdirSync(sessionDir, { recursive: true });
     logs.push(`Created session directory: ${sessionDir}`);
     
-    // Validate and save files
+    // Save date range if provided
+    if (body.dateRange) {
+      const dateRangeFile = path.join(sessionDir, 'date-range.json');
+      fs.writeFileSync(dateRangeFile, JSON.stringify(body.dateRange, null, 2));
+      logs.push('Saved date range');
+    }
+    
     const uploadedFiles: string[] = [];
     let savedCount = 0;
     let errorCount = 0;

@@ -1,6 +1,6 @@
 'use client';
 
-import { FileUp, AlertCircle, ChevronDown } from 'lucide-react';
+import { FileUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,6 +29,8 @@ export default function HomePage() {
     handleProcess,
     processFiles,
     getFileStatus,
+    detectedDateRange,  // ADD THIS
+    isScanning,         // ADD THIS
   } = useInstagramUpload();
 
   return (
@@ -173,6 +175,77 @@ export default function HomePage() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Date Range Scanning */}
+            {isScanning && (
+              <Card className="shadow-lg shadow-primary/5 border-primary/10">
+                <CardContent className="py-8">
+                  <div className="flex items-center justify-center gap-3">
+                    <Spinner />
+                    <p className="text-muted-foreground">Scanning date range...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Date Range Info - show after scanning */}
+            {detectedDateRange && !isScanning && (
+              <Card className="shadow-lg shadow-primary/5 border-primary/10">
+                <CardHeader>
+                  <CardTitle className="text-2xl">Date Range</CardTitle>
+                  <CardDescription className="text-base">
+                    Automatic data filtering applied
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-muted/50 rounded-lg border border-border">
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Your data will be cleaned to only include activity from:
+                      </p>
+                      <div className="flex items-center justify-center gap-4">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-primary">
+                            {detectedDateRange.earliest.toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {detectedDateRange.earliest.toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-2xl text-muted-foreground">→</div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-primary">
+                            {detectedDateRange.latest.toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {detectedDateRange.latest.toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      All searches, follows, and other activities outside this range will be automatically filtered out
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Actions card */}
             <Card className="shadow-lg shadow-primary/5 border-primary/10">

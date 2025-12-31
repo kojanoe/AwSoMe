@@ -47,15 +47,14 @@ function findAllJsonFiles(dir: string): string[] {
   return jsonFiles;
 }
 
-function processFiles(sessionDir: string, logs: string[]) {
-  const jsonFiles = findAllJsonFiles(sessionDir);
+function processFiles(sessionDir: string, logs: string[], dateRange: { start: number; end: number } | null) {
+  const jsonFiles = findAllJsonFiles(sessionDir).filter(f => !f.endsWith('date-range.json'));
   logs.push(`Found ${jsonFiles.length} JSON files`);
   
   if (jsonFiles.length === 0) {
     throw new Error('No JSON files found in session directory');
   }
   
-  // Check for missing files
   const foundFiles = jsonFiles.map(f => path.basename(f));
   const missingFiles = REQUIRED_FILES.filter(required => !foundFiles.includes(required));
   
@@ -65,7 +64,6 @@ function processFiles(sessionDir: string, logs: string[]) {
     logs.push('All 11 required files found');
   }
   
-  // Parse all files
   const parsedFiles: ParsedFile[] = [];
   let successCount = 0;
   let errorCount = 0;
@@ -85,7 +83,7 @@ function processFiles(sessionDir: string, logs: string[]) {
         continue;
       }
       
-      const parsed = parseInstagramFile(data, type);
+      const parsed = parseInstagramFile(data, type, dateRange || undefined);
       
       if (parsed.length > 0) {
         parsedFiles.push({
@@ -112,26 +110,22 @@ function processFiles(sessionDir: string, logs: string[]) {
 }
 
 function generateAndSaveData(sessionId: string, outputDir: string, parsedFiles: ParsedFile[], logs: string[]) {
-  // Create output directory if needed
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
     logs.push('Created output directory');
   }
   
-  // structured data
   const combined = combineInstagramData(parsedFiles);
   const structuredFile = path.join(outputDir, `structured-data-${sessionId}.json`);
   fs.writeFileSync(structuredFile, JSON.stringify(combined, null, 2));
-  logs.push('✓ Structured data saved');
+  logs.push('Structured data saved');
   
-  // snapshot
   const store = createDataStore(combined);
   const snapshot = generateStatsSnapshot(store, sessionId);
   const snapshotFile = path.join(outputDir, `snapshot-${sessionId}.json`);
   fs.writeFileSync(snapshotFile, JSON.stringify(snapshot, null, 2));
-  logs.push('✓ Stats snapshot generated');
+  logs.push('Stats snapshot generated');
   
-  // Create summary
   const summary: Record<string, number> = {};
   for (const [key, value] of Object.entries(combined)) {
     if (Array.isArray(value) && value.length > 0) {
@@ -172,13 +166,18 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
     
-    // Process files
-    const { parsedFiles, successCount, errorCount } = processFiles(sessionDir, logs);
+    let dateRange: { start: number; end: number } | null = null;
+    const dateRangeFile = path.join(sessionDir, 'date-range.json');
     
-    // Generate and save data
+    if (fs.existsSync(dateRangeFile)) {
+      dateRange = JSON.parse(fs.readFileSync(dateRangeFile, 'utf8'));
+      logs.push(`Date range filter loaded`);
+    }
+    
+    const { parsedFiles, successCount, errorCount } = processFiles(sessionDir, logs, dateRange);
     const { summary } = generateAndSaveData(sessionId, outputDir, parsedFiles, logs);
     
-    logs.push('Data generation complete!');
+    logs.push('Data generation complete');
     
     return NextResponse.json({
       success: true,

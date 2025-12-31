@@ -1,8 +1,11 @@
 /**
+ * COPY TO: lib/stats/overview.ts
+ * REPLACE ENTIRE FILE
+ * 
  * Overview Statistics
  * 
  * Basic numbers showing overall Instagram activity.
- * These are simple counts with no complex analysis.
+ * Uses same deduplication logic as contentRatio for consistency.
  */
 
 import { InstagramDataStore } from '../data/dataStore';
@@ -20,13 +23,76 @@ export interface OverviewStats {
 }
 
 /**
- * Calculate overview statistics
+ * Calculate overview statistics with deduplication
  */
 export function calculateOverview(store: InstagramDataStore): OverviewStats {
+  const postsViewed = store.getPostsViewed();
+  const videosWatched = store.getVideosWatched();
+  const adsViewed = store.getAdsViewed();
+
+  // Create ads set for identification
+  const adsSet = new Set<string>();
+  adsViewed.forEach(ad => {
+    adsSet.add(`${ad.author}:${ad.timestamp}`);
+  });
+
+  // Combine all content and deduplicate by author + timestamp
+  const allContent = new Map<string, { isAd: boolean; isPost: boolean; isVideo: boolean }>();
+  
+  // Track posts
+  postsViewed.forEach(item => {
+    const key = `${item.author}:${item.timestamp}`;
+    if (!allContent.has(key)) {
+      allContent.set(key, { isAd: false, isPost: true, isVideo: false });
+    }
+  });
+
+  // Track videos (and mark if they're ads)
+  videosWatched.forEach(item => {
+    const key = `${item.author}:${item.timestamp}`;
+    const isAd = adsSet.has(key);
+    
+    if (!allContent.has(key)) {
+      allContent.set(key, { isAd, isPost: false, isVideo: true });
+    } else {
+      // Update existing entry
+      const entry = allContent.get(key)!;
+      entry.isVideo = true;
+      if (isAd) entry.isAd = true;
+    }
+  });
+
+  // Mark ads
+  adsViewed.forEach(item => {
+    const key = `${item.author}:${item.timestamp}`;
+    if (!allContent.has(key)) {
+      allContent.set(key, { isAd: true, isPost: false, isVideo: true });
+    } else {
+      allContent.get(key)!.isAd = true;
+    }
+  });
+
+  // Count deduplicated content
+  let postsCount = 0;
+  let videosCount = 0;
+  let adsCount = 0;
+
+  allContent.forEach((item) => {
+    if (item.isAd) {
+      adsCount++;
+    }
+    if (item.isPost && !item.isAd) {
+      postsCount++;
+    }
+    if (item.isVideo && !item.isAd) {
+      videosCount++;
+    }
+  });
+
   return {
-    totalPostsViewed: store.getPostsViewed().length,
-    totalVideosWatched: store.getVideosWatched().length,
-    totalAdsViewed: store.getAdsViewed().length,
+    totalPostsViewed: postsCount,
+    totalVideosWatched: videosCount,
+    totalAdsViewed: adsCount,
     totalLikesGiven: store.getLikedPosts().length,
     totalCommentsLiked: store.getLikedComments().length,
     dateRange: store.getDateRange(),

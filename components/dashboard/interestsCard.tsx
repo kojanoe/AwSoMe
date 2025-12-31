@@ -1,7 +1,9 @@
 /**
- * Interests Section Card
- * Shows Instagram's recommended topics and how they match user behavior
+ * COPY TO: components/dashboard/interestsCard.tsx
+ * REPLACE ENTIRE FILE
  */
+
+'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +14,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Info, Check, X } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Info } from 'lucide-react';
+import { useState } from 'react';
 
 export interface TopicsStats {
   totalTopics: number;
@@ -35,7 +46,11 @@ interface InterestsCardProps {
   stats: TopicsStats;
 }
 
+const ITEMS_PER_PAGE = 24;
+
 export function InterestsCard({ stats }: InterestsCardProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
   if (stats.totalTopics === 0) {
     return (
       <Card>
@@ -49,6 +64,18 @@ export function InterestsCard({ stats }: InterestsCardProps) {
       </Card>
     );
   }
+
+  const totalPages = Math.ceil(stats.topTopics.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentTopics = stats.topTopics.slice(startIndex, endIndex);
+
+  const getTopicColor = (topic: typeof stats.topTopics[0]) => {
+    if (topic.matchedInSearches && topic.matchedInProfiles) return "bg-green-500 hover:bg-green-600 text-white";
+    if (topic.matchedInSearches) return "bg-blue-500 hover:bg-blue-600 text-white";
+    if (topic.matchedInProfiles) return "bg-purple-500 hover:bg-purple-600 text-white";
+    return "bg-muted hover:bg-muted/80 text-muted-foreground";
+  };
 
   return (
     <div className="space-y-6">
@@ -89,7 +116,7 @@ export function InterestsCard({ stats }: InterestsCardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Match percentage - large display */}
+              {/* Match percentage */}
               <div className="text-center">
                 <div className="text-5xl font-bold text-primary">
                   {stats.matchAnalysis.matchPercentage}%
@@ -129,13 +156,13 @@ export function InterestsCard({ stats }: InterestsCardProps) {
           </CardContent>
         </Card>
 
-        {/* Topics List Card */}
+        {/* Topics Tag Cloud Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-xl">Recommended Topics</CardTitle>
-                <CardDescription>Top topics suggested by Instagram</CardDescription>
+                <CardDescription>All {stats.totalTopics} topics suggested by Instagram</CardDescription>
               </div>
               <TooltipProvider>
                 <Tooltip>
@@ -146,8 +173,9 @@ export function InterestsCard({ stats }: InterestsCardProps) {
                   </TooltipTrigger>
                   <TooltipContent side="left" className="max-w-xs">
                     <p>
-                      Green checkmark means you searched for this topic. Red X means
-                      Instagram suggested it but you never searched for it.
+                      Color-coded topics: Green = matched in both searches & profiles,
+                      Blue = matched in searches, Purple = matched in profiles,
+                      Gray = not matched
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -155,51 +183,75 @@ export function InterestsCard({ stats }: InterestsCardProps) {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {stats.topTopics.map((topic, index) => {
-                const isMatched = topic.matchedInSearches || topic.matchedInProfiles;
-                
-                return (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+            <div className="space-y-4">
+              {/* Legend */}
+              <div className="flex flex-wrap gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span>Both</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span>Searches</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-purple-500" />
+                  <span>Profiles</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-muted" />
+                  <span>Not matched</span>
+                </div>
+              </div>
+
+              {/* Tag Cloud */}
+              <div className="flex flex-wrap gap-2 min-h-[200px]">
+                {currentTopics.map((topic, idx) => (
+                  <Badge
+                    key={startIndex + idx}
+                    className={`${getTopicColor(topic)} cursor-default transition-colors`}
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {/* Match indicator */}
-                      <div
-                        className={`flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full ${
-                          isMatched
-                            ? 'bg-green-100 dark:bg-green-900'
-                            : 'bg-red-100 dark:bg-red-900'
-                        }`}
-                      >
-                        {isMatched ? (
-                          <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <X className="w-4 h-4 text-red-600 dark:text-red-400" />
-                        )}
-                      </div>
+                    {topic.topic}
+                  </Badge>
+                ))}
+              </div>
 
-                      {/* Topic name */}
-                      <span className="font-medium text-sm truncate">{topic.topic}</span>
-                    </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
 
-                    {/* Match badges */}
-                    <div className="flex gap-1 flex-shrink-0">
-                      {topic.matchedInSearches && (
-                        <Badge variant="outline" className="text-xs">
-                          Keyword
-                        </Badge>
-                      )}
-                      {topic.matchedInProfiles && (
-                        <Badge variant="outline" className="text-xs">
-                          Profile
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              <p className="text-xs text-muted-foreground text-center">
+                Showing {startIndex + 1}-{Math.min(endIndex, stats.topTopics.length)} of {stats.topTopics.length} topics
+              </p>
             </div>
           </CardContent>
         </Card>

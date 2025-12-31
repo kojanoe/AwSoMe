@@ -6,15 +6,15 @@ export interface Chunk {
   content: string;
   metadata: {
     sessionId: string;
-    priority: number; // 1-10, higher = more important
+    priority: number;
     keywords: string[];
   };
 }
 
-// Convert Snapshot into searchable text chunks
 export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
   const chunks: Chunk[] = [];
   const { sessionId } = snapshot;
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Overview Stats
   chunks.push({
@@ -56,7 +56,6 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
   });
 
   // Activity Days
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const activeDayNames = snapshot.behavioral.activeDays.mostActiveDays
     .map(d => dayNames[d])
     .join(', ');
@@ -68,6 +67,30 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
       sessionId,
       priority: 7,
       keywords: ['days', 'weekday', 'weekend', 'active', 'when', 'schedule']
+    }
+  });
+
+  // Time-based content patterns - Hourly
+  chunks.push({
+    id: `${sessionId}-time-content-hourly`,
+    category: 'time-patterns',
+    content: `Your content consumption varies throughout the day. At ${snapshot.insights.highlights.peakIntendedHour}:00 you see the most intended content, while ${snapshot.insights.highlights.peakSuggestedHour}:00 is when you see the most suggested content. This shows when you're actively seeking content vs when the algorithm shows you more recommendations.`,
+    metadata: {
+      sessionId,
+      priority: 8,
+      keywords: ['time', 'hours', 'content', 'intended', 'suggested', 'algorithm', 'pattern']
+    }
+  });
+
+  // Time-based content patterns - Daily
+  chunks.push({
+    id: `${sessionId}-time-content-daily`,
+    category: 'time-patterns',
+    content: `Your content consumption patterns differ by day of the week. On ${dayNames[snapshot.insights.highlights.peakIntendedDay]}s you see more intended content, while ${dayNames[snapshot.insights.highlights.peakSuggestedDay]}s you see more suggested content. This reveals how your Instagram usage shifts between weekdays and weekends.`,
+    metadata: {
+      sessionId,
+      priority: 8,
+      keywords: ['days', 'weekday', 'weekend', 'content', 'intended', 'suggested', 'algorithm', 'pattern']
     }
   });
 
@@ -96,7 +119,6 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
       }
     });
 
-    // Top Binge Sessions
     const top3 = snapshot.behavioral.bingeWatching.top3BingeSessions;
     if (top3.length > 0) {
       const descriptions = top3.map((s, i) => 
@@ -223,7 +245,6 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
       }
     });
 
-    // Top matched topics
     const matchedTopics = snapshot.topics.topTopics
       .filter(t => t.matchedInSearches || t.matchedInProfiles)
       .slice(0, 5)
@@ -243,7 +264,6 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
       });
     }
 
-    // Unmatched topics
     if (snapshot.topics.unmatchedTopics.length > 0) {
       const unmatchedList = snapshot.topics.unmatchedTopics.slice(0, 5).join(', ');
       const remaining = snapshot.topics.unmatchedTopics.length > 5 
@@ -261,7 +281,6 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
       });
     }
 
-    // All topics list
     const allTopicsList = snapshot.topics.topTopics
       .map(t => t.topic)
       .join(', ');
@@ -292,7 +311,7 @@ export function chunkSnapshot(snapshot: StatsSnapshot): Chunk[] {
   chunks.push({
     id: `${sessionId}-highlights`,
     category: 'insights',
-    content: `Key insights: Most active at ${snapshot.insights.highlights.mostActiveHour}:00 on ${dayNames[snapshot.insights.highlights.mostActiveDay]}s. Dominant content: ${snapshot.insights.highlights.dominantContentSource}. Engagement level: ${snapshot.insights.highlights.engagementLevel}. Binge-watching risk: ${snapshot.insights.highlights.bingeWatchingRisk}.`,
+    content: `Key insights: Most active at ${snapshot.insights.highlights.mostActiveHour}:00 on ${dayNames[snapshot.insights.highlights.mostActiveDay]}s. Dominant content: ${snapshot.insights.highlights.dominantContentSource}. Engagement level: ${snapshot.insights.highlights.engagementLevel}. Binge-watching risk: ${snapshot.insights.highlights.bingeWatchingRisk}. Peak intended content at ${snapshot.insights.highlights.peakIntendedHour}:00, peak suggested content at ${snapshot.insights.highlights.peakSuggestedHour}:00.`,
     metadata: {
       sessionId,
       priority: 10,

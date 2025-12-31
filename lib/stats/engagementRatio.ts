@@ -1,40 +1,12 @@
 /**
- * Engagement Ratio Calculator
+ * COPY TO: lib/stats/engagementRatio.ts
+ * REPLACE ENTIRE FILE
  * 
- * This calculator measures how often users engage (like) with suggested content
- * and ads after viewing them, compared to content they intentionally sought out.
- * 
- * DEFINITIONS:
- * 
- * 1. SUGGESTED CONTENT
- *    Posts/videos from accounts NOT in:
- *    - Accounts you follow (following)
- *    - Accounts you searched for (profile_searches)
- * 
- * 2. ADS
- *    Content from ads_watched
- * 
- * 3. ENGAGEMENT
- *    A "like" is counted as engagement if:
- *    - The liked post author matches a viewed post/video/ad author
- *    - The like happened within 5 minutes AFTER viewing
- *    - This indicates the user liked the content after seeing it
- * 
- * FORMULA:
- * --------
- * Suggested Engagement Rate = Liked Suggested / Total Suggested Viewed
- * Ads Engagement Rate = Liked Ads / Total Ads Viewed
- * 
- * TIME WINDOW:
- * ------------
- * 5 minutes (300 seconds) - Short window because we can't match exact posts,
- * only authors. A tight window reduces false positives.
+ * Engagement Ratio Analysis - Like-Based Approach
+ * Calculates engagement with algorithmic content based on liked posts
  */
 
 import { InstagramDataStore } from '../data/dataStore';
-import { Following, ProfileSearch, LikedPost } from '@/types/instagram';
-
-const TIME_WINDOW_SECONDS = 300; // 5 minutes
 
 export interface EngagementRatioStats {
   suggestedEngagement: {
@@ -47,35 +19,42 @@ export interface EngagementRatioStats {
     totalLiked: number;
     engagementRate: number;
   };
-  timeWindow: number; // in seconds
+  timeWindow: number; // Not used anymore but kept for compatibility
 }
 
 /**
- * Calculate engagement rates for suggested content and ads
+ * Calculate engagement rates based on liked posts
+ * New approach: Uses all liked posts and categorizes them by content source
+ * Uses same deduplication logic as contentRatio for consistency
  */
 export function calculateEngagementRatio(store: InstagramDataStore): EngagementRatioStats {
+  // Get all content sources
   const following = store.getFollowing();
-  const profileSearches = store.getProfileSearches();
-  const postsViewed = store.getPostsViewed();
-  const videosWatched = store.getVideosWatched();
+  const searches = store.getAllSearches();
   const adsViewed = store.getAdsViewed();
   const likedPosts = store.getLikedPosts();
+  const postsViewed = store.getPostsViewed();
+  const videosWatched = store.getVideosWatched();
 
-  // Create set of intended authors (following + searched)
-  const intendedAuthors = new Set<string>();
-  following.forEach((f: Following) => intendedAuthors.add(f.author));
-  profileSearches.forEach((s: ProfileSearch) => intendedAuthors.add(s.author));
+  // Create sets for faster lookups
+  const followingSet = new Set(following.map(f => f.author.toLowerCase()));
+  const searchedAuthorsSet = new Set(
+    searches
+      .filter(s => s.type === 'profile')
+      .map(s => s.value.toLowerCase())
+  );
+  
+  // Create intended authors set (following + searches)
+  const intendedAuthors = new Set([...followingSet, ...searchedAuthorsSet]);
 
-  // Create a Set of ads for quick lookup (author + timestamp)
+  // Create ads set for matching (author:timestamp)
   const adsSet = new Set<string>();
-  const adsList: Array<{ author: string; timestamp: number }> = [];
   adsViewed.forEach(ad => {
-    const key = `${ad.author}:${ad.timestamp}`;
-    adsSet.add(key);
-    adsList.push({ author: ad.author, timestamp: ad.timestamp });
+    adsSet.add(`${ad.author}:${ad.timestamp}`);
   });
 
-  // Combine all content and deduplicate
+  // SAME DEDUPLICATION AS CONTENTRATIO
+  // Combine all content and deduplicate by author + timestamp
   const allContent = new Map<string, { author: string; timestamp: number; isAd: boolean }>();
   
   [...postsViewed, ...videosWatched, ...adsViewed].forEach(item => {
@@ -89,85 +68,77 @@ export function calculateEngagementRatio(store: InstagramDataStore): EngagementR
     }
   });
 
-  // Filter for suggested content only (not ads, not intended)
-  const suggestedViewed = Array.from(allContent.values()).filter(
-    item => !item.isAd && !intendedAuthors.has(item.author)
-  );
+  // Categorize deduplicated content
+  let intendedViewed = 0;
+  let suggestedViewed = 0;
+  let adsViewedCount = 0;
 
-  // Count likes on suggested content (within time window after viewing)
-  let suggestedLikedCount = 0;
-
-  likedPosts.forEach((like: LikedPost) => {
-    // Skip if this is an intended author
-    if (intendedAuthors.has(like.author)) {
-      return;
+  allContent.forEach((item) => {
+    const authorLower = item.author?.toLowerCase();
+    
+    // Priority 1: Is it an ad?
+    if (item.isAd) {
+      adsViewedCount++;
     }
-
-    // Check if this was in ads (ads take priority)
-    const wasAd = adsList.some(ad =>
-      ad.author === like.author &&
-      ad.timestamp < like.timestamp &&
-      (like.timestamp - ad.timestamp) <= TIME_WINDOW_SECONDS
-    );
-
-    if (wasAd) {
-      return; // Don't count as suggested if it was an ad
+    // Priority 2: Is it intended content?
+    else if (authorLower && intendedAuthors.has(authorLower)) {
+      intendedViewed++;
     }
-
-    // Find if this author was viewed recently before liking
-    const wasViewedRecently = suggestedViewed.some(view => 
-      view.author === like.author &&
-      view.timestamp < like.timestamp &&
-      (like.timestamp - view.timestamp) <= TIME_WINDOW_SECONDS
-    );
-
-    if (wasViewedRecently) {
-      suggestedLikedCount++;
+    // Priority 3: It's suggested content
+    else {
+      suggestedViewed++;
     }
   });
 
-  // Count likes on ads (within time window after viewing)
-  let adsLikedCount = 0;
+  // Categorize liked posts
+  let suggestedLikes = 0;
+  let adsLikes = 0;
 
-  likedPosts.forEach((like: LikedPost) => {
-    // Find if this author appeared in ads recently before liking
-    const wasAdRecently = adsList.some(ad =>
-      ad.author === like.author &&
-      ad.timestamp < like.timestamp &&
-      (like.timestamp - ad.timestamp) <= TIME_WINDOW_SECONDS
-    );
+  for (const like of likedPosts) {
+    const author = like.author?.toLowerCase();
+    if (!author) continue;
 
-    if (wasAdRecently) {
-      adsLikedCount++;
+    // Skip if it's intended content (following or searched)
+    if (intendedAuthors.has(author)) {
+      continue;
     }
-  });
+
+    // Check if author appears in ads
+    const isAdAuthor = adsViewed.some(ad => ad.author?.toLowerCase() === author);
+    
+    if (isAdAuthor) {
+      adsLikes++;
+    } else {
+      suggestedLikes++;
+    }
+  }
 
   // Calculate engagement rates
-  const suggestedEngagementRate = suggestedViewed.length > 0
-    ? suggestedLikedCount / suggestedViewed.length
+  const suggestedEngagementRate = suggestedViewed > 0 
+    ? suggestedLikes / suggestedViewed 
     : 0;
 
-  const adsEngagementRate = adsList.length > 0
-    ? adsLikedCount / adsList.length
+  const adsEngagementRate = adsViewedCount > 0 
+    ? adsLikes / adsViewedCount 
     : 0;
 
   return {
     suggestedEngagement: {
-      totalViewed: suggestedViewed.length,
-      totalLiked: suggestedLikedCount,
+      totalViewed: suggestedViewed,
+      totalLiked: suggestedLikes,
       engagementRate: suggestedEngagementRate,
     },
     adsEngagement: {
-      totalViewed: adsList.length,
-      totalLiked: adsLikedCount,
+      totalViewed: adsViewedCount,
+      totalLiked: adsLikes,
       engagementRate: adsEngagementRate,
     },
-    timeWindow: TIME_WINDOW_SECONDS,
+    timeWindow: 300, // Kept for compatibility, not used anymore
   };
 }
 
 /**
- * Get engagement rates as percentages
+ * Get engagement percentages as whole numbers
  */
 export function getEngagementPercentages(stats: EngagementRatioStats) {
   return {
@@ -177,16 +148,18 @@ export function getEngagementPercentages(stats: EngagementRatioStats) {
 }
 
 /**
- * Get a summary message about engagement
+ * Get human-readable engagement summary
  */
 export function getEngagementSummary(stats: EngagementRatioStats): string {
-  const percentages = getEngagementPercentages(stats);
+  const suggestedPercent = Math.round(stats.suggestedEngagement.engagementRate * 100);
   
-  if (percentages.suggested > 10) {
-    return `You engage frequently with suggested content (${percentages.suggested}% engagement rate)`;
-  } else if (percentages.suggested > 5) {
-    return `You moderately engage with suggested content (${percentages.suggested}% engagement rate)`;
-  } else {
-    return `You rarely engage with suggested content (${percentages.suggested}% engagement rate)`;
+  if (suggestedPercent > 10) {
+    return `You engage frequently with suggested content (${suggestedPercent}% engagement rate)`;
   }
+  
+  if (suggestedPercent > 5) {
+    return `You moderately engage with suggested content (${suggestedPercent}% engagement rate)`;
+  }
+  
+  return `You rarely engage with suggested content (${suggestedPercent}% engagement rate)`;
 }

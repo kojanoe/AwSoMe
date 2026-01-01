@@ -162,7 +162,6 @@ function extractArray(data: any, paths: string[]): any[] {
   
   return [];
 }
-
 export function parseInstagramFile(
   data: any, 
   type: DataFileType,
@@ -193,11 +192,8 @@ export function parseInstagramFile(
       return values.some(v => v !== '' && v !== null && v !== undefined);
     });
     
-    console.log(`[${type}] Before filtering: ${filtered.length} items`);
-    
     // Apply date range filter ONLY if provided AND file type should be filtered
     if (dateRange && !noFilterTypes.includes(type)) {
-      const beforeCount = filtered.length;
       filtered = filtered.filter((item: any) => {
         // If item has timestamp, check if it's in range
         if (typeof item.timestamp === 'number' && item.timestamp > 0) {
@@ -206,11 +202,6 @@ export function parseInstagramFile(
         // Keep items without timestamps (shouldn't happen for most types)
         return true;
       });
-      console.log(`[${type}] After filtering: ${filtered.length} items (removed ${beforeCount - filtered.length})`);
-      console.log(`[${type}] Date range: ${new Date(dateRange.start * 1000).toISOString()} to ${new Date(dateRange.end * 1000).toISOString()}`);
-      if (filtered.length > 0) {
-        console.log(`[${type}] Sample timestamp: ${filtered[0].timestamp} = ${new Date(filtered[0].timestamp * 1000).toISOString()}`);
-      }
     }
     
     return filtered;

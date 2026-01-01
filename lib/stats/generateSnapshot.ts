@@ -1,9 +1,4 @@
-/**
- * COPY THIS FILE TO: lib/stats/generateSnapshot.ts
- * REPLACE THE ENTIRE FILE
- */
-
-import { InstagramDataStore } from '../data/dataStore';
+import { DataWrapper } from '../data/dataWrapper';
 import { StatsSnapshot } from '@/types/snapshot';
 import { calculateOverview } from './overview';
 import { calculateContentRatio } from './contentRatio';
@@ -13,17 +8,17 @@ import { calculateTopics } from './topics';
 import { calculateHourlyContentBreakdown, calculateDailyContentBreakdown } from './timeBasedContent';
 
 export function generateStatsSnapshot(
-  store: InstagramDataStore,
+  wrapper: DataWrapper,
   sessionId: string
 ): StatsSnapshot {
-  const overview = calculateOverview(store);
-  const contentRatio = calculateContentRatio(store);
-  const engagement = calculateEngagementRatio(store);
-  const behavioral = calculateBehavioralPatterns(store);
-  const topics = calculateTopics(store);
+  const overview = calculateOverview(wrapper);
+  const contentRatio = calculateContentRatio(wrapper);
+  const engagement = calculateEngagementRatio(wrapper);
+  const behavioral = calculateBehavioralPatterns(wrapper);
+  const topics = calculateTopics(wrapper);
   
-  const hourlyBreakdown = calculateHourlyContentBreakdown(store);
-  const dailyBreakdown = calculateDailyContentBreakdown(store);
+  const hourlyBreakdown = calculateHourlyContentBreakdown(wrapper);
+  const dailyBreakdown = calculateDailyContentBreakdown(wrapper);
 
   const contentPercentages = {
     intended: Math.round(contentRatio.intendedRatio * 100),

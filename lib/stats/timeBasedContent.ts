@@ -1,4 +1,4 @@
-import { InstagramDataStore } from '../data/dataStore';
+import { DataWrapper } from '../data/dataWrapper';
 import { Following, ProfileSearch } from '@/types/instagram';
 
 export interface HourlyContentBreakdown {
@@ -24,13 +24,13 @@ export interface DailyContentBreakdown {
 }
 
 export function calculateHourlyContentBreakdown(
-  store: InstagramDataStore
+  wrapper: DataWrapper
 ): HourlyContentBreakdown[] {
-  const postsViewed = store.getPostsViewed();
-  const videosWatched = store.getVideosWatched();
-  const adsViewed = store.getAdsViewed();
-  const following = store.getFollowing();
-  const profileSearches = store.getProfileSearches();
+  const postsViewed = wrapper.getPostsViewed();
+  const videosWatched = wrapper.getVideosWatched();
+  const adsViewed = wrapper.getAdsViewed();
+  const following = wrapper.getFollowing();
+  const profileSearches = wrapper.getProfileSearches();
 
   const intendedAuthors = new Set<string>();
   following.forEach((f: Following) => intendedAuthors.add(f.author));
@@ -82,13 +82,13 @@ export function calculateHourlyContentBreakdown(
 }
 
 export function calculateDailyContentBreakdown(
-  store: InstagramDataStore
+  wrapper: DataWrapper
 ): DailyContentBreakdown[] {
-  const postsViewed = store.getPostsViewed();
-  const videosWatched = store.getVideosWatched();
-  const adsViewed = store.getAdsViewed();
-  const following = store.getFollowing();
-  const profileSearches = store.getProfileSearches();
+  const postsViewed = wrapper.getPostsViewed();
+  const videosWatched = wrapper.getVideosWatched();
+  const adsViewed = wrapper.getAdsViewed();
+  const following = wrapper.getFollowing();
+  const profileSearches = wrapper.getProfileSearches();
 
   const intendedAuthors = new Set<string>();
   following.forEach((f: Following) => intendedAuthors.add(f.author));

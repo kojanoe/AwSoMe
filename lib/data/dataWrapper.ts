@@ -1,10 +1,10 @@
 import { ParsedInstagramData } from '@/types/instagram';
 
 /**
- * Central data store for Instagram data
- * Provides access to parsed data with useful helper methods
+ * DataWrapper - Wraps parsed Instagram data with helper methods
+ * Provides convenient access and computed properties for stats calculations
  */
-export class InstagramDataStore {
+export class DataWrapper {
   private data: ParsedInstagramData;
 
   constructor(data: ParsedInstagramData) {
@@ -170,8 +170,8 @@ export class InstagramDataStore {
 }
 
 /**
- * Create data store from parsed files
+ * Create data wrapper from parsed files
  */
-export function createDataStore(data: ParsedInstagramData): InstagramDataStore {
-  return new InstagramDataStore(data);
+export function createDataWrapper(data: ParsedInstagramData): DataWrapper {
+  return new DataWrapper(data);
 }

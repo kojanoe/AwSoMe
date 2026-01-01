@@ -40,7 +40,7 @@
  * so the three ratios will always sum to 100%.
  */
 
-import { InstagramDataStore } from '../data/dataStore';
+import { DataWrapper } from '../data/dataWrapper';
 import { Following, ProfileSearch } from '@/types/instagram';
 
 export interface ContentRatioStats {
@@ -61,12 +61,12 @@ export interface ContentRatioStats {
 /**
  * Calculate the ratio between intended content and suggested content
  */
-export function calculateContentRatio(store: InstagramDataStore): ContentRatioStats {
-  const postsViewed = store.getPostsViewed();
-  const videosWatched = store.getVideosWatched();
-  const following = store.getFollowing();
-  const profileSearches = store.getProfileSearches();
-  const adsViewed = store.getAdsViewed();
+export function calculateContentRatio(wrapper: DataWrapper): ContentRatioStats {
+  const postsViewed = wrapper.getPostsViewed();
+  const videosWatched = wrapper.getVideosWatched();
+  const following = wrapper.getFollowing();
+  const profileSearches = wrapper.getProfileSearches();
+  const adsViewed = wrapper.getAdsViewed();
 
   // Create a Set of intended authors (accounts you follow or searched for)
   const intendedAuthors = new Set<string>();

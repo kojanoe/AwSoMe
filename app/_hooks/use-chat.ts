@@ -14,7 +14,7 @@ export function useChat({ sessionId }: UseChatProps) {
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize RAG on mount
+  // Initialize RAG and load chat history on mount
   useEffect(() => {
     const initialize = async () => {
       try {
@@ -28,6 +28,9 @@ export function useChat({ sessionId }: UseChatProps) {
           await initializeRAG(sessionId);
         }
         
+        // Load chat history from server
+        await loadChatHistory();
+        
         setIsInitializing(false);
       } catch (err) {
         console.error('RAG initialization error:', err);
@@ -38,6 +41,45 @@ export function useChat({ sessionId }: UseChatProps) {
 
     initialize();
   }, [sessionId]);
+
+  // Load chat history from server
+  const loadChatHistory = async () => {
+    try {
+      const response = await fetch(`/api/chat-history?sessionId=${sessionId}`);
+      
+      if (!response.ok) {
+        console.warn('Failed to load chat history');
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.messages && Array.isArray(data.messages)) {
+        setMessages(data.messages);
+      }
+    } catch (err) {
+      console.error('Failed to load chat history:', err);
+    }
+  };
+
+  // Save chat history to server
+  const saveChatHistory = async (updatedMessages: ChatMessage[]) => {
+    try {
+      await fetch('/api/chat-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          messages: updatedMessages,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to save chat history:', err);
+      // Don't show error to user - this is background saving
+    }
+  };
 
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading || isInitializing) return;
@@ -50,30 +92,26 @@ export function useChat({ sessionId }: UseChatProps) {
       timestamp: Date.now()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setError(null);
     setIsLoading(true);
 
     try {
-      //Search for relevant chunks using semantic search
+      // Search for relevant chunks using semantic search
       const { semanticSearch, buildContext } = await import('@/lib/chat/embeddings/semanticSearch');
       const searchResults = await semanticSearch(message, sessionId, 5);
       
-      //Build context from top results
+      // Build context from top results
       const context = buildContext(searchResults);
       
-      //Prepare messages for API (last 5 messages for context)
-      const conversationHistory = messages.slice(-5).map(m => ({
+      // Prepare messages for API (last 5 messages for context)
+      const conversationHistory = updatedMessages.slice(-5).map(m => ({
         role: m.role,
         content: m.content
       }));
       
-      conversationHistory.push({
-        role: 'user',
-        content: message
-      });
-      
-      //Call chat API with context
+      // Call chat API with context
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -98,7 +136,11 @@ export function useChat({ sessionId }: UseChatProps) {
         timestamp: Date.now()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const finalMessages = [...updatedMessages, assistantMessage];
+      setMessages(finalMessages);
+      
+      // Save chat history to server after AI response
+      await saveChatHistory(finalMessages);
       
     } catch (err) {
       setError('Sorry, something went wrong. Please try again.');
@@ -108,9 +150,12 @@ export function useChat({ sessionId }: UseChatProps) {
     }
   };
 
-  const clearConversation = () => {
+  const clearConversation = async () => {
     setMessages([]);
     setError(null);
+    
+    // Clear chat history on server
+    await saveChatHistory([]);
   };
 
   return {

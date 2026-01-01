@@ -1,14 +1,4 @@
-/**
- * COPY TO: lib/stats/overview.ts
- * REPLACE ENTIRE FILE
- * 
- * Overview Statistics
- * 
- * Basic numbers showing overall Instagram activity.
- * Uses same deduplication logic as contentRatio for consistency.
- */
-
-import { InstagramDataStore } from '../data/dataStore';
+import { DataWrapper } from '../data/dataWrapper';
 
 export interface OverviewStats {
   totalPostsViewed: number;
@@ -25,10 +15,10 @@ export interface OverviewStats {
 /**
  * Calculate overview statistics with deduplication
  */
-export function calculateOverview(store: InstagramDataStore): OverviewStats {
-  const postsViewed = store.getPostsViewed();
-  const videosWatched = store.getVideosWatched();
-  const adsViewed = store.getAdsViewed();
+export function calculateOverview(wrapper: DataWrapper): OverviewStats {
+  const postsViewed = wrapper.getPostsViewed();
+  const videosWatched = wrapper.getVideosWatched();
+  const adsViewed = wrapper.getAdsViewed();
 
   // Create ads set for identification
   const adsSet = new Set<string>();
@@ -93,8 +83,8 @@ export function calculateOverview(store: InstagramDataStore): OverviewStats {
     totalPostsViewed: postsCount,
     totalVideosWatched: videosCount,
     totalAdsViewed: adsCount,
-    totalLikesGiven: store.getLikedPosts().length,
-    totalCommentsLiked: store.getLikedComments().length,
-    dateRange: store.getDateRange(),
+    totalLikesGiven: wrapper.getLikedPosts().length,
+    totalCommentsLiked: wrapper.getLikedComments().length,
+    dateRange: wrapper.getDateRange(),
   };
 }

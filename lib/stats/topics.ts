@@ -1,4 +1,4 @@
-import { InstagramDataStore } from '../data/dataStore';
+import { DataWrapper } from '../data/dataWrapper';
 
 export interface TopicsStats {
   totalTopics: number;
@@ -48,10 +48,10 @@ function topicMatchesProfile(topic: string, username: string): boolean {
   );
 }
 
-export function calculateTopics(store: InstagramDataStore): TopicsStats {
-  const recommendedTopics = store.getRecommendedTopics();
-  const keywordSearches = store.getKeywordSearches();
-  const profileSearches = store.getProfileSearches();
+export function calculateTopics(wrapper: DataWrapper): TopicsStats {
+  const recommendedTopics = wrapper.getRecommendedTopics();
+  const keywordSearches = wrapper.getKeywordSearches();
+  const profileSearches = wrapper.getProfileSearches();
 
   const validTopics = recommendedTopics.filter(
     topic => topic && topic.topic && typeof topic.topic === 'string' && topic.topic.trim() !== ''

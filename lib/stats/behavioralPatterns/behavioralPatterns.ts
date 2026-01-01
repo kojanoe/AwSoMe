@@ -5,7 +5,7 @@
  * Combines activity collection, session detection, and pattern analysis.
  */
 
-import { InstagramDataStore } from '../../data/dataStore';
+import { DataWrapper } from '../../data/dataWrapper';
 import { BehavioralPatternsStats, Activity } from './types';
 import { 
   collectAllActivities, 
@@ -23,10 +23,10 @@ import {
 /**
  * Calculate search behavior statistics
  */
-function calculateSearchBehavior(store: InstagramDataStore, activities: Activity[]) {
-  const profileSearchCount = store.getProfileSearches().length;
-  const keywordSearchCount = store.getKeywordSearches().length;
-  const placeSearchCount = store.getPlaceSearches().length;
+function calculateSearchBehavior(wrapper: DataWrapper, activities: Activity[]) {
+  const profileSearchCount = wrapper.getProfileSearches().length;
+  const keywordSearchCount = wrapper.getKeywordSearches().length;
+  const placeSearchCount = wrapper.getPlaceSearches().length;
   const totalSearches = profileSearchCount + keywordSearchCount + placeSearchCount;
 
   const searchActivities = activities.filter(a => 
@@ -89,6 +89,8 @@ function getEmptyStats(): BehavioralPatternsStats {
       longestBingeDurationMinutes: 0,
       averageBingeVideoCount: 0,
       bingeSessions: [],
+      longestBingeMidpointTime: null,
+      top3BingeSessions: [],  
     },
     searchBehavior: {
       totalSearches: 0,
@@ -108,8 +110,8 @@ function getEmptyStats(): BehavioralPatternsStats {
 /**
  * Main function to calculate behavioral patterns
  */
-export function calculateBehavioralPatterns(store: InstagramDataStore): BehavioralPatternsStats {
-  const activities = collectAllActivities(store);
+export function calculateBehavioralPatterns(wrapper: DataWrapper): BehavioralPatternsStats {
+  const activities = collectAllActivities(wrapper);
   
   if (activities.length === 0) {
     return getEmptyStats();
@@ -131,7 +133,7 @@ export function calculateBehavioralPatterns(store: InstagramDataStore): Behavior
     },
     sessions: calculateSessionStats(sessions),
     bingeWatching: calculateBingeStats(bingeSessions),
-    searchBehavior: calculateSearchBehavior(store, activities),
+    searchBehavior: calculateSearchBehavior(wrapper, activities),
   };
 }
 

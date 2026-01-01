@@ -18,9 +18,10 @@ async function loadSnapshot(userId: string): Promise<StatsSnapshot> {
   const snapshotPath = join(
     process.cwd(),
     'data',
-    'generatedData',
+    'sessions',
+    userId,
     `snapshot-${userId}.json`
-  );
+  );  
   const fileContent = await readFile(snapshotPath, 'utf8');
   return JSON.parse(fileContent);
 }

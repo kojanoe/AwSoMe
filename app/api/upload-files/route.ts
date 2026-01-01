@@ -44,24 +44,34 @@ export async function POST(request: NextRequest) {
     const sessionId = randomUUID();
     logs.push(`Generated session ID: ${sessionId}`);
     
-    const rawDataDir = path.join(process.cwd(), 'data', 'rawdata');
-    const sessionDir = path.join(rawDataDir, sessionId);
+    const sessionsDir = path.join(process.cwd(), 'data', 'sessions');
+    const sessionDir = path.join(sessionsDir, sessionId);
     
-    if (!fs.existsSync(rawDataDir)) {
-      fs.mkdirSync(rawDataDir, { recursive: true });
-      logs.push('Created rawdata directory');
+    if (!fs.existsSync(sessionsDir)) {
+      fs.mkdirSync(sessionsDir, { recursive: true });
+      logs.push('Created sessions directory');
     }
     
     fs.mkdirSync(sessionDir, { recursive: true });
     logs.push(`Created session directory: ${sessionDir}`);
     
-    // Save date range if provided
+    // Save consent immediately (user has consented by uploading)
+    const consentFile = path.join(sessionDir, `consent-${sessionId}.json`);
+    const consentData = {
+      sessionId,
+      hasConsented: true,
+      timestamp: Date.now(),
+    };
+    fs.writeFileSync(consentFile, JSON.stringify(consentData, null, 2));
+    logs.push('Consent saved');
+    
+    // Save date range if provided (with sessionId in filename)
     if (body.dateRange) {
-      const dateRangeFile = path.join(sessionDir, 'date-range.json');
+      const dateRangeFile = path.join(sessionDir, `date-range-${sessionId}.json`);
       fs.writeFileSync(dateRangeFile, JSON.stringify(body.dateRange, null, 2));
       logs.push('Saved date range');
     }
-    
+        
     const uploadedFiles: string[] = [];
     let savedCount = 0;
     let errorCount = 0;

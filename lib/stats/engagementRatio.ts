@@ -1,12 +1,4 @@
-/**
- * COPY TO: lib/stats/engagementRatio.ts
- * REPLACE ENTIRE FILE
- * 
- * Engagement Ratio Analysis - Like-Based Approach
- * Calculates engagement with algorithmic content based on liked posts
- */
-
-import { InstagramDataStore } from '../data/dataStore';
+import { DataWrapper } from '../data/dataWrapper';
 
 export interface EngagementRatioStats {
   suggestedEngagement: {
@@ -27,14 +19,14 @@ export interface EngagementRatioStats {
  * New approach: Uses all liked posts and categorizes them by content source
  * Uses same deduplication logic as contentRatio for consistency
  */
-export function calculateEngagementRatio(store: InstagramDataStore): EngagementRatioStats {
+export function calculateEngagementRatio(wrapper: DataWrapper): EngagementRatioStats {
   // Get all content sources
-  const following = store.getFollowing();
-  const searches = store.getAllSearches();
-  const adsViewed = store.getAdsViewed();
-  const likedPosts = store.getLikedPosts();
-  const postsViewed = store.getPostsViewed();
-  const videosWatched = store.getVideosWatched();
+  const following = wrapper.getFollowing();
+  const searches = wrapper.getAllSearches();
+  const adsViewed = wrapper.getAdsViewed();
+  const likedPosts = wrapper.getLikedPosts();
+  const postsViewed = wrapper.getPostsViewed();
+  const videosWatched = wrapper.getVideosWatched();
 
   // Create sets for faster lookups
   const followingSet = new Set(following.map(f => f.author.toLowerCase()));

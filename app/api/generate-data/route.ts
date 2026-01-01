@@ -6,7 +6,7 @@ import {
   parseInstagramFile, 
   combineInstagramData
 } from '@/lib/data/parser';
-import { createDataStore } from '@/lib/data/dataStore';
+import { createDataWrapper } from '@/lib/data/dataWrapper';
 import { generateStatsSnapshot } from '@/lib/stats/generateSnapshot';
 import type { ParsedFile } from '@/types/instagram';
 
@@ -109,22 +109,19 @@ function processFiles(sessionDir: string, logs: string[], dateRange: { start: nu
   return { parsedFiles, successCount, errorCount };
 }
 
-function generateAndSaveData(sessionId: string, outputDir: string, parsedFiles: ParsedFile[], logs: string[]) {
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-    logs.push('Created output directory');
-  }
-  
+function generateAndSaveData(sessionId: string, sessionDir: string, parsedFiles: ParsedFile[], logs: string[]) {
+  // Create structured data with sessionId in filename
   const combined = combineInstagramData(parsedFiles);
-  const structuredFile = path.join(outputDir, `structured-data-${sessionId}.json`);
+  const structuredFile = path.join(sessionDir, `structured-data-${sessionId}.json`);
   fs.writeFileSync(structuredFile, JSON.stringify(combined, null, 2));
   logs.push('Structured data saved');
   
-  const store = createDataStore(combined);
-  const snapshot = generateStatsSnapshot(store, sessionId);
-  const snapshotFile = path.join(outputDir, `snapshot-${sessionId}.json`);
+  // Generate snapshot with sessionId in filename
+  const wrapper = createDataWrapper(combined);
+  const snapshot = generateStatsSnapshot(wrapper, sessionId);
+  const snapshotFile = path.join(sessionDir, `snapshot-${sessionId}.json`);
   fs.writeFileSync(snapshotFile, JSON.stringify(snapshot, null, 2));
-  logs.push('Stats snapshot generated');
+  logs.push('Snapshot saved');
   
   const summary: Record<string, number> = {};
   for (const [key, value] of Object.entries(combined)) {
@@ -134,6 +131,37 @@ function generateAndSaveData(sessionId: string, outputDir: string, parsedFiles: 
   }
   
   return { summary };
+}
+
+function deleteRawFiles(sessionDir: string, logs: string[]) {
+  try {
+    const items = fs.readdirSync(sessionDir);
+    let deletedCount = 0;
+    
+    for (const item of items) {
+      // Keep these files (with or without sessionId in name)
+      if (item.startsWith('structured-data-') || 
+          item.startsWith('snapshot-') || 
+          item.startsWith('consent-') ||
+          item.startsWith('chat-history-') ||
+          item.startsWith('date-range-')) {
+        continue;
+      }
+      
+      // Delete everything else (raw uploaded files)
+      const itemPath = path.join(sessionDir, item);
+      const stat = fs.statSync(itemPath);
+      
+      if (stat.isFile()) {
+        fs.unlinkSync(itemPath);
+        deletedCount++;
+      }
+    }
+    
+    logs.push(`Deleted ${deletedCount} raw files`);
+  } catch (error) {
+    logs.push(`Warning: Failed to delete raw files: ${(error as Error).message}`);
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -155,8 +183,7 @@ export async function POST(request: NextRequest) {
     const sessionId = body.sessionId;
     logs.push(`Processing session: ${sessionId}`);
     
-    const sessionDir = path.join(process.cwd(), 'data', 'rawdata', sessionId);
-    const outputDir = path.join(process.cwd(), 'data', 'generatedData');
+    const sessionDir = path.join(process.cwd(), 'data', 'sessions', sessionId);
     
     if (!fs.existsSync(sessionDir)) {
       return NextResponse.json({ 
@@ -167,15 +194,18 @@ export async function POST(request: NextRequest) {
     }
     
     let dateRange: { start: number; end: number } | null = null;
-    const dateRangeFile = path.join(sessionDir, 'date-range.json');
-    
+    const dateRangeFile = path.join(sessionDir, `date-range-${sessionId}.json`);
+
     if (fs.existsSync(dateRangeFile)) {
       dateRange = JSON.parse(fs.readFileSync(dateRangeFile, 'utf8'));
       logs.push(`Date range filter loaded`);
     }
     
     const { parsedFiles, successCount, errorCount } = processFiles(sessionDir, logs, dateRange);
-    const { summary } = generateAndSaveData(sessionId, outputDir, parsedFiles, logs);
+    const { summary } = generateAndSaveData(sessionId, sessionDir, parsedFiles, logs);
+    
+    // Delete raw files after successful processing
+    deleteRawFiles(sessionDir, logs);
     
     logs.push('Data generation complete');
     

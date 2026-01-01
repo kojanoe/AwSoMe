@@ -165,9 +165,6 @@ export function useInstagramUpload() {
       const uploadResult = await uploadResponse.json();
       const sessionId = uploadResult.sessionId;
 
-      // Save consent to localStorage
-      saveConsent(sessionId);
-
       // Step 3: Generate data
       const generateResponse = await fetch('/api/generate-data', {
         method: 'POST',

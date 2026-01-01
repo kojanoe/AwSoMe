@@ -14,28 +14,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Read snapshot file from new location
-    const snapshotPath = join(
+    // Read consent file
+    const consentPath = join(
       process.cwd(),
       'data',
       'sessions',
       sessionId,
-      `snapshot-${sessionId}.json`
+      `consent-${sessionId}.json`
     );
 
-    const fileContent = await readFile(snapshotPath, 'utf-8');
-    const snapshot = JSON.parse(fileContent);
+    const fileContent = await readFile(consentPath, 'utf-8');
+    const consent = JSON.parse(fileContent);
 
-    return NextResponse.json(snapshot);
+    return NextResponse.json(consent);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       return NextResponse.json(
-        { error: 'Snapshot not found' },
-        { status: 404 }
+        { hasConsented: false },
+        { status: 200 }
       );
     }
 
-    console.error('Snapshot API error:', error);
+    console.error('Consent API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

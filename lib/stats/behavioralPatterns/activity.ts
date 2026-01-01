@@ -1,9 +1,4 @@
-/**
- * Activity Collection Utilities
- * Collects and organizes all user activities from the data store
- */
-
-import { InstagramDataStore } from '../../data/dataStore';
+import { DataWrapper } from '../../data/dataWrapper';
 import {
   LikedPost,
   LikedComment,
@@ -17,12 +12,12 @@ import {
 import { Activity } from './types';
 
 /**
- * Collect all activities with timestamps from the data store
+ * Collect all activities with timestamps from the data wrapper
  */
-export function collectAllActivities(store: InstagramDataStore): Activity[] {
+export function collectAllActivities(wrapper: DataWrapper): Activity[] {
   const activities: Activity[] = [];
 
-  store.getPostsViewed().forEach((post: PostViewed) => {
+  wrapper.getPostsViewed().forEach((post: PostViewed) => {
     if (post.timestamp > 0) {
       activities.push({
         type: 'post_viewed',
@@ -32,7 +27,7 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getVideosWatched().forEach((video: VideoWatched) => {
+  wrapper.getVideosWatched().forEach((video: VideoWatched) => {
     if (video.timestamp > 0) {
       activities.push({
         type: 'video_watched',
@@ -42,7 +37,7 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getAdsViewed().forEach((ad: AdViewed) => {
+  wrapper.getAdsViewed().forEach((ad: AdViewed) => {
     if (ad.timestamp > 0) {
       activities.push({
         type: 'ad_viewed',
@@ -52,7 +47,7 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getLikedPosts().forEach((like: LikedPost) => {
+  wrapper.getLikedPosts().forEach((like: LikedPost) => {
     if (like.timestamp > 0) {
       activities.push({
         type: 'liked_post',
@@ -62,7 +57,7 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getLikedComments().forEach((comment: LikedComment) => {
+  wrapper.getLikedComments().forEach((comment: LikedComment) => {
     if (comment.timestamp > 0) {
       activities.push({
         type: 'liked_comment',
@@ -71,7 +66,7 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getProfileSearches().forEach((search: ProfileSearch) => {
+  wrapper.getProfileSearches().forEach((search: ProfileSearch) => {
     if (search.timestamp > 0) {
       activities.push({
         type: 'profile_search',
@@ -81,7 +76,7 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getKeywordSearches().forEach((search: KeywordSearch) => {
+  wrapper.getKeywordSearches().forEach((search: KeywordSearch) => {
     if (search.timestamp > 0) {
       activities.push({
         type: 'keyword_search',
@@ -91,7 +86,7 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
     }
   });
 
-  store.getPlaceSearches().forEach((search: PlaceSearch) => {
+  wrapper.getPlaceSearches().forEach((search: PlaceSearch) => {
     if (search.timestamp > 0) {
       activities.push({
         type: 'place_search',
@@ -104,10 +99,6 @@ export function collectAllActivities(store: InstagramDataStore): Activity[] {
   return activities.sort((a, b) => a.timestamp - b.timestamp);
 }
 
-/**
- * Calculate hourly activity distribution (0-23 hours)
- * Uses local timezone for hour calculation
- */
 export function calculateHourlyDistribution(activities: Activity[]): Record<number, number> {
   const distribution: Record<number, number> = {};
   
@@ -117,17 +108,13 @@ export function calculateHourlyDistribution(activities: Activity[]): Record<numb
 
   activities.forEach(activity => {
     const date = new Date(activity.timestamp * 1000);
-    const hour = date.getHours(); // Uses local timezone
+    const hour = date.getHours();
     distribution[hour]++;
   });
 
   return distribution;
 }
 
-/**
- * Calculate daily activity distribution (0-6, Sunday-Saturday)
- * Uses local timezone for day calculation
- */
 export function calculateDailyDistribution(activities: Activity[]): Record<number, number> {
   const distribution: Record<number, number> = {};
   
@@ -137,16 +124,13 @@ export function calculateDailyDistribution(activities: Activity[]): Record<numbe
 
   activities.forEach(activity => {
     const date = new Date(activity.timestamp * 1000);
-    const day = date.getDay(); // Uses local timezone
+    const day = date.getDay();
     distribution[day]++;
   });
 
   return distribution;
 }
 
-/**
- * Get top N items from a distribution
- */
 export function getTopFromDistribution(distribution: Record<number, number>, n: number): number[] {
   return Object.entries(distribution)
     .sort(([, countA], [, countB]) => countB - countA)

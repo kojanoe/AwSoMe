@@ -43,8 +43,13 @@ export interface KeywordSearch extends TimestampData {
   value: string;
 }
 
-export interface RecommendedTopic {
-  topic: string;
+export interface AdClicked extends TimestampData {
+  url: string;
+}
+
+export interface SavedPost extends TimestampData {
+  author: string;
+  link: string;
 }
 
 export interface AdViewed extends TimestampData {
@@ -65,9 +70,10 @@ export interface ParsedInstagramData {
   videosWatched: VideoWatched[];
   placeSearches: PlaceSearch[];
   keywordSearches: KeywordSearch[];
-  recommendedTopics: RecommendedTopic[];
   adsViewed: AdViewed[];
   postsViewed: PostViewed[];
+  adsClicked: AdClicked[];      
+  savedPosts: SavedPost[];      
 }
 
 // File type identification
@@ -80,9 +86,10 @@ export type DataFileType =
   | 'videos_watched'
   | 'place_searches'
   | 'word_or_phrase_searches'
-  | 'recommended_topics'
   | 'ads_viewed'
   | 'posts_viewed'
+  | 'ads_clicked'        
+  | 'saved_posts'       
   | 'unknown';
 
 // Result from parsing a single file

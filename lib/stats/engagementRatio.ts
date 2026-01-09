@@ -4,11 +4,13 @@ export interface EngagementRatioStats {
   suggestedEngagement: {
     totalViewed: number;
     totalLiked: number;
+    totalSaved: number;
     engagementRate: number;
   };
   adsEngagement: {
     totalViewed: number;
     totalLiked: number;
+    totalClicked: number;
     engagementRate: number;
   };
   timeWindow: number; // Not used anymore but kept for compatibility
@@ -25,6 +27,8 @@ export function calculateEngagementRatio(wrapper: DataWrapper): EngagementRatioS
   const searches = wrapper.getAllSearches();
   const adsViewed = wrapper.getAdsViewed();
   const likedPosts = wrapper.getLikedPosts();
+  const adsClicked = wrapper.getAdsClicked();
+  const savedPosts = wrapper.getSavedPosts();
   const postsViewed = wrapper.getPostsViewed();
   const videosWatched = wrapper.getVideosWatched();
 
@@ -105,6 +109,21 @@ export function calculateEngagementRatio(wrapper: DataWrapper): EngagementRatioS
     }
   }
 
+  // Categorize saved posts
+  let suggestedSaves = 0;
+
+  for (const save of savedPosts) {
+    const author = save.author?.toLowerCase();
+    if (!author) continue;
+
+    // Skip if it's intended content
+    if (intendedAuthors.has(author)) {
+      continue;
+    }
+
+    suggestedSaves++;
+  }
+
   // Calculate engagement rates
   const suggestedEngagementRate = suggestedViewed > 0 
     ? suggestedLikes / suggestedViewed 
@@ -114,15 +133,19 @@ export function calculateEngagementRatio(wrapper: DataWrapper): EngagementRatioS
     ? adsLikes / adsViewedCount 
     : 0;
 
+  const adsClickCount = adsClicked.length;
+
   return {
     suggestedEngagement: {
       totalViewed: suggestedViewed,
       totalLiked: suggestedLikes,
+      totalSaved: suggestedSaves,
       engagementRate: suggestedEngagementRate,
     },
     adsEngagement: {
       totalViewed: adsViewedCount,
       totalLiked: adsLikes,
+      totalClicked: adsClickCount,
       engagementRate: adsEngagementRate,
     },
     timeWindow: 300, // Kept for compatibility, not used anymore

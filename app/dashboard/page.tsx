@@ -7,7 +7,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ActiveHoursChart } from "@/components/charts/activeHours";
 import { ActiveDaysChart } from "@/components/charts/activeDays";
 import { SearchDistributionChart } from "@/components/charts/searchDistribution";
-import { InterestsCard } from "@/components/dashboard/interestsCard";
 import { ExportButton } from '@/components/shared/exportButton';
 import { ContentSourcesChart } from "@/components/charts/contentSources";
 import { StatsSnapshot } from '@/types/snapshot';
@@ -209,6 +208,10 @@ export default async function DashboardPage({
                       <span className="text-muted-foreground">Liked</span>
                       <span className="font-medium">{snapshot.engagement.suggestedEngagement.totalLiked.toLocaleString()}</span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Saved</span>
+                      <span className="font-medium">{snapshot.engagement.suggestedEngagement.totalSaved.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -242,6 +245,10 @@ export default async function DashboardPage({
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Liked</span>
                       <span className="font-medium">{snapshot.engagement.adsEngagement.totalLiked.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Clicked</span>
+                      <span className="font-medium">{snapshot.engagement.adsEngagement.totalClicked.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -488,12 +495,6 @@ export default async function DashboardPage({
             </Card>
           </div>
         </section>
-
-        {/* Interests Section */}
-        <section className="py-6 pb-20">
-          <InterestsCard stats={snapshot.topics} />
-        </section>
-
       </div>
 
       <FloatingChat sessionId={userId} />

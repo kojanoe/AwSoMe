@@ -19,9 +19,10 @@ const REQUIRED_FILES = [
   'place_searches.json',
   'profile_searches.json',
   'word_or_phrase_searches.json',
-  'recommended_topics.json',
   'liked_comments.json',
-  'liked_posts.json'
+  'liked_posts.json',
+  'ads_clicked.json',
+  'saved_posts.json'
 ];
 
 function findAllJsonFiles(dir: string): string[] {

@@ -13,6 +13,8 @@ import { ConfirmDialog } from '@/components/shared/confirmDialog';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { useInstagramUpload } from '@/app/_hooks/use-instagram-upload';
 import { LoadingOverlay } from '@/components/shared/loadingOverlay';
+import { ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function HomePage() {
   const {
@@ -29,15 +31,14 @@ export default function HomePage() {
     handleProcess,
     processFiles,
     getFileStatus,
-    detectedDateRange,  // ADD THIS
-    isScanning,         // ADD THIS
+    detectedDateRange,
+    isScanning,
   } = useInstagramUpload();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl min-h-screen">
       {/* Hero Section */}
       <div className="mb-16">
-        {/* Gradient background effect */}
         <div className="relative">
           <div className="absolute inset-0 -z-10">
             <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
@@ -45,12 +46,10 @@ export default function HomePage() {
           </div>
           
           <div className="text-center py-12">
-            {/* Main title with gradient */}
             <h1 className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-chart-2 to-primary bg-clip-text text-transparent">
               AwSoMe
             </h1>
             
-            {/* Subtitle with accent */}
             <p className="text-2xl md:text-3xl mb-6">
               <span className="font-bold text-foreground">Aw</span>
               <span className="text-muted-foreground">areness on </span>
@@ -60,7 +59,6 @@ export default function HomePage() {
               <span className="text-muted-foreground">dia</span>
             </p>
             
-            {/* Description */}
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Gain deep insights into your Instagram usage patterns and understand how you interact with social media.
             </p>
@@ -71,7 +69,6 @@ export default function HomePage() {
       {/* Instagram Insights Section */}
       <div className="mb-12">
         <div className="relative mb-8">
-          {/* Accent line */}
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-chart-2 rounded-full" />
           
           <div className="pl-6">
@@ -88,12 +85,50 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Download Instructions */}
+      <Collapsible className="mb-8">
+        <CollapsibleTrigger className="flex items-center gap-2 text-lg font-semibold hover:text-primary transition-colors">
+          <ChevronDown className="h-5 w-5 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+          How to download your Instagram data
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-4 space-y-4 text-muted-foreground">
+          <ol className="list-decimal list-inside space-y-3 ml-2">
+            <li>Log in to Instagram on a web browser</li>
+            <li>
+              Visit{' '}
+              <a 
+                href="https://accountscenter.instagram.com/info_and_permissions/dyi/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                accountscenter.instagram.com/info_and_permissions/dyi
+              </a>
+            </li>
+            <li>Click <strong>"Create Export"</strong></li>
+            <li>Select <strong>"Export to device"</strong></li>
+            <li>Change format to <strong>JSON</strong> and date range to <strong>"Last month"</strong>, then save changes</li>
+            <li>Click <strong>"Start the Export"</strong> and enter your password</li>
+            <li>Wait for Instagram's email (usually 1-48 hours)</li>
+            <li>Return to the link above, download the ZIP file, and extract it</li>
+            <li>Upload the extracted folder below</li>
+          </ol>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Upload Section */}
       <div className="mb-16">
+        {/* Error display - show regardless of files state */}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-base">{error}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Empty state - show when no files uploaded */}
         {!files && (
           <div className="relative">
-            {/* Glassmorphism effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-chart-2/5 rounded-2xl blur-2xl" />
             
             <Empty className="relative border-2 border-dashed border-primary/30 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-colors">
@@ -117,7 +152,7 @@ export default function HomePage() {
                 <input
                   id="folder-upload"
                   type="file"
-                  /* @ts-ignore - webkitdirectory is not in types but works in all modern browsers */
+                  /* @ts-ignore */
                   webkitdirectory=""
                   directory=""
                   multiple
@@ -129,10 +164,9 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* File list and processing - show after files uploaded */}
+        {/* File list and processing */}
         {files && (
           <div className="space-y-6">
-            {/* File list table */}
             <Card className="shadow-lg shadow-primary/5 border-primary/10">
               <CardHeader>
                 <CardTitle className="text-2xl">Detected Files ({files.size}/{requiredFiles.length})</CardTitle>
@@ -176,7 +210,6 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* Date Range Scanning */}
             {isScanning && (
               <Card className="shadow-lg shadow-primary/5 border-primary/10">
                 <CardContent className="py-8">
@@ -188,7 +221,6 @@ export default function HomePage() {
               </Card>
             )}
 
-            {/* Date Range Info - show after scanning */}
             {detectedDateRange && !isScanning && (
               <Card className="shadow-lg shadow-primary/5 border-primary/10">
                 <CardHeader>
@@ -247,14 +279,12 @@ export default function HomePage() {
               </Card>
             )}
 
-            {/* Actions card */}
             <Card className="shadow-lg shadow-primary/5 border-primary/10">
               <CardHeader>
                 <CardTitle className="text-2xl">Process Data</CardTitle>
                 <CardDescription className="text-base">Review and consent to continue</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Explanatory text */}
                 <div className="space-y-3 text-base text-muted-foreground">
                   <p>
                     Your data will be processed locally in your browser and stored securely on our
@@ -268,7 +298,6 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* Consent checkbox */}
                 <div className="flex items-start gap-3 pt-2">
                   <Checkbox
                     id="consent"
@@ -281,7 +310,6 @@ export default function HomePage() {
                   </Label>
                 </div>
 
-                {/* Process button */}
                 <Button
                   onClick={handleProcess}
                   disabled={!hasConsent || isProcessing}
@@ -297,20 +325,12 @@ export default function HomePage() {
                     'Analyze Files'
                   )}
                 </Button>
-
-                {/* Error alert */}
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-base">{error}</AlertDescription>
-                  </Alert>
-                )}
               </CardContent>
             </Card>
           </div>
         )}
       </div>
-      {/* Missing files warning dialog */}
+
       <ConfirmDialog
         open={showMissingFilesDialog}
         onOpenChange={setShowMissingFilesDialog}

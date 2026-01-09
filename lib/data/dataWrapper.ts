@@ -47,16 +47,20 @@ export class DataWrapper {
     return this.data.keywordSearches;
   }
 
-  getRecommendedTopics() {
-    return this.data.recommendedTopics;
-  }
-
   getAdsViewed() {
     return this.data.adsViewed;
   }
 
   getPostsViewed() {
     return this.data.postsViewed;
+  }
+
+  getAdsClicked() {
+    return this.data.adsClicked;
+  }
+
+  getSavedPosts() {
+    return this.data.savedPosts;
   }
 
   getAllData() {

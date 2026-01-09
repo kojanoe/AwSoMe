@@ -111,6 +111,25 @@ const FILE_CONFIGS = {
       author: item.string_map_data?.Author?.value || '',
       timestamp: item.string_map_data?.Time?.timestamp || 0
     })
+  },
+
+  ads_clicked: {
+    keywords: ['ads_clicked'],
+    dataPath: ['impressions_history_ads_clicked'],
+    parse: (item: any) => ({
+      url: item.title || '',
+      timestamp: item.string_list_data?.[0]?.timestamp || 0
+    })
+  },
+
+  saved_posts: {
+    keywords: ['saved_posts'],
+    dataPath: ['saved_saved_media'],
+    parse: (item: any) => ({
+      author: item.title || '',
+      link: item.string_map_data?.['Saved on']?.href || '',
+      timestamp: item.string_map_data?.['Saved on']?.timestamp || 0
+    })
   }
 };
 
@@ -179,7 +198,6 @@ export function parseInstagramFile(
   // Files that should NOT be filtered by date range
   const noFilterTypes: DataFileType[] = [
     'following',           // Keep all follows - they persist
-    'recommended_topics'   // No timestamps
   ];
   
   try {
@@ -221,9 +239,10 @@ export function combineInstagramData(parsedFiles: ParsedFile[]): ParsedInstagram
     videosWatched: [],
     placeSearches: [],
     keywordSearches: [],
-    recommendedTopics: [],
     adsViewed: [],
-    postsViewed: []
+    postsViewed: [],
+    adsClicked: [],
+    savedPosts: []
   };
   
   const typeMapping: Record<string, keyof ParsedInstagramData> = {
@@ -235,9 +254,10 @@ export function combineInstagramData(parsedFiles: ParsedFile[]): ParsedInstagram
     'videos_watched': 'videosWatched',
     'place_searches': 'placeSearches',
     'word_or_phrase_searches': 'keywordSearches',
-    'recommended_topics': 'recommendedTopics',
     'ads_viewed': 'adsViewed',
-    'posts_viewed': 'postsViewed'
+    'posts_viewed': 'postsViewed',
+    'ads_clicked': 'adsClicked',
+    'saved_posts': 'savedPosts'
   };
   
   for (const file of parsedFiles) {

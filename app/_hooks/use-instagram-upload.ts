@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { detectInstagramFiles, getRequiredFiles } from '@/lib/upload/fileDetection';
-import { saveConsent } from '@/lib/consents/consentStore';
 
 // Helper function to recursively extract timestamps from JSON
 function extractTimestamps(obj: any, timestamps: number[]): void {
@@ -44,11 +43,6 @@ async function scanContentDateRange(files: Map<string, File>): Promise<{
           latest: timestamps[timestamps.length - 1],
           count: timestamps.length
         };
-        
-        console.log(`\n${filename}:`);
-        console.log(`  Count: ${timestamps.length}`);
-        console.log(`  Earliest: ${timestamps[0]} → ${new Date(timestamps[0] * 1000).toLocaleString()}`);
-        console.log(`  Latest: ${timestamps[timestamps.length - 1]} → ${new Date(timestamps[timestamps.length - 1] * 1000).toLocaleString()}`);
       }
     } catch (error) {
       console.warn(`Failed to scan ${filename}:`, error);
@@ -63,10 +57,6 @@ async function scanContentDateRange(files: Map<string, File>): Promise<{
   // Go back 1 week (604800 seconds)
   const ONE_WEEK_SECONDS = 604800;
   const calculatedEarliest = allLatest - ONE_WEEK_SECONDS;
-
-  console.log('\n=== CALCULATED RANGE ===');
-  console.log(`Latest: ${allLatest} → ${new Date(allLatest * 1000).toLocaleString()}`);
-  console.log(`Earliest (latest - 1 week): ${calculatedEarliest} → ${new Date(calculatedEarliest * 1000).toLocaleString()}`);
 
   return {
     earliest: new Date(calculatedEarliest * 1000),
@@ -99,6 +89,15 @@ export function useInstagramUpload() {
 
     const result = detectInstagramFiles(e.target.files);
     
+    // Check for HTML files and block everything
+    if (result.hasHtmlFiles) {
+      setError('HTML files detected. Please download your data in JSON format, not HTML. See instructions above.');
+      setFiles(null);
+      setMissingFiles([]);
+      setDetectedDateRange(null);
+      return;
+    }
+
     setFiles(result.matched);
     setMissingFiles(result.missing);
     setError(null);

@@ -1,9 +1,9 @@
 /**
  * File Detection for Instagram Data Upload
- * Detects and validates the 11 required JSON files from Instagram export
+ * Detects and validates the 12 required JSON files from Instagram export
  */
 
-// The 11 required files from Instagram export (exact filenames)
+// The 12 required files from Instagram export (exact filenames)
 const REQUIRED_FILES = [
   'ads_viewed.json',
   'posts_viewed.json',
@@ -13,16 +13,18 @@ const REQUIRED_FILES = [
   'place_searches.json',
   'profile_searches.json',
   'word_or_phrase_searches.json',
-  'recommended_topics.json',
   'liked_comments.json',
-  'liked_posts.json'
+  'liked_posts.json',
+  'ads_clicked.json',
+  'saved_posts.json' 
 ] as const;
 
 export interface DetectionResult {
-  isValid: boolean;           // true if all 11 required files found
+  isValid: boolean;           // true if all 12 required files found
   matched: Map<string, File>; // filename -> File object
   missing: string[];          // which required files are missing
   extra: File[];              // other JSON files (not in required list)
+  hasHtmlFiles: boolean;      // true if HTML files detected
 }
 
 /**
@@ -32,6 +34,12 @@ export interface DetectionResult {
  */
 export function detectInstagramFiles(files: FileList | File[]): DetectionResult {
   const fileArray = Array.from(files);
+  
+  // Check for HTML files FIRST
+  const htmlFiles = fileArray.filter(file => 
+    file.name.toLowerCase().endsWith('.html')
+  );
+  const hasHtmlFiles = htmlFiles.length > 0;
   
   // Filter only JSON files
   const jsonFiles = fileArray.filter(file => 
@@ -62,14 +70,15 @@ export function detectInstagramFiles(files: FileList | File[]): DetectionResult 
     requiredFile => !matched.has(requiredFile)
   );
 
-  // Valid if all 11 required files are found
+  // Valid if all 12 required files are found
   const isValid = missing.length === 0;
 
   return {
     isValid,
     matched,
     missing,
-    extra
+    extra,
+    hasHtmlFiles
   };
 }
 

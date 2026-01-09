@@ -4,7 +4,6 @@ import { calculateOverview } from './overview';
 import { calculateContentRatio } from './contentRatio';
 import { calculateEngagementRatio } from './engagementRatio';
 import { calculateBehavioralPatterns } from './behavioralPatterns';
-import { calculateTopics } from './topics';
 import { calculateHourlyContentBreakdown, calculateDailyContentBreakdown } from './timeBasedContent';
 
 export function generateStatsSnapshot(
@@ -15,7 +14,6 @@ export function generateStatsSnapshot(
   const contentRatio = calculateContentRatio(wrapper);
   const engagement = calculateEngagementRatio(wrapper);
   const behavioral = calculateBehavioralPatterns(wrapper);
-  const topics = calculateTopics(wrapper);
   
   const hourlyBreakdown = calculateHourlyContentBreakdown(wrapper);
   const dailyBreakdown = calculateDailyContentBreakdown(wrapper);
@@ -53,7 +51,6 @@ export function generateStatsSnapshot(
     contentRatio,
     engagement,
     behavioral,
-    topics,
     timeBasedContent: {
       hourly: hourlyBreakdown,
       daily: dailyBreakdown,

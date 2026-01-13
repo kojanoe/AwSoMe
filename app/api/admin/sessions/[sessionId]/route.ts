@@ -1,26 +1,31 @@
-import { readFile } from 'fs/promises';
+import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { NextRequest } from 'next/server';
+import JSZip from 'jszip';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId } = await params;
-  const snapshotPath = join(
-    process.cwd(), 
-    'data', 
-    'sessions', 
-    sessionId, 
-    `snapshot-${sessionId}.json`
-  );
+  const sessionPath = join(process.cwd(), 'data', 'sessions', sessionId);
   
-  const data = await readFile(snapshotPath, 'utf-8');
+  const files = await readdir(sessionPath);
+  const jsonFiles = files.filter(f => f.endsWith('.json'));
   
-  return new Response(data, {
+  const zip = new JSZip();
+  
+  for (const file of jsonFiles) {
+    const content = await readFile(join(sessionPath, file), 'utf-8');
+    zip.file(file, content);
+  }
+  
+    const zipBuffer = await zip.generateAsync({ type: 'blob' });
+
+    return new Response(zipBuffer, {
     headers: {
-      'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="${sessionId}.json"`,
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="${sessionId}.zip"`,
     },
-  });
+    });
 }

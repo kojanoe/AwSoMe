@@ -14,7 +14,7 @@ interface ActiveHoursChartProps {
 type ViewMode = 'activity' | 'content';
 
 export function ActiveHoursChart({ data, contentBreakdown }: ActiveHoursChartProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('activity');
+  const [viewMode, setViewMode] = useState<ViewMode>('content');
 
   const activityData = Array.from({ length: 24 }, (_, hour) => ({
     hour,
@@ -48,18 +48,18 @@ export function ActiveHoursChart({ data, contentBreakdown }: ActiveHoursChartPro
       {hasContentData && (
         <div className="flex gap-2">
           <Button
-            variant={viewMode === 'activity' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('activity')}
-          >
-            Activity
-          </Button>
-          <Button
             variant={viewMode === 'content' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('content')}
           >
             Content Type
+          </Button>
+          <Button
+            variant={viewMode === 'activity' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('activity')}
+          >
+            Activity
           </Button>
         </div>
       )}

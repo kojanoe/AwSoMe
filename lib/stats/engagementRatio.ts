@@ -125,15 +125,17 @@ export function calculateEngagementRatio(wrapper: DataWrapper): EngagementRatioS
   }
 
   // Calculate engagement rates
+  const adsClickCount = adsClicked.length;
+
   const suggestedEngagementRate = suggestedViewed > 0 
-    ? suggestedLikes / suggestedViewed 
+    ? (suggestedLikes + suggestedSaves) / suggestedViewed 
     : 0;
 
   const adsEngagementRate = adsViewedCount > 0 
-    ? adsLikes / adsViewedCount 
+    ? (adsLikes + adsClickCount) / adsViewedCount 
     : 0;
 
-  const adsClickCount = adsClicked.length;
+  
 
   return {
     suggestedEngagement: {

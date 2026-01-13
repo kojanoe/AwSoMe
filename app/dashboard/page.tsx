@@ -148,7 +148,23 @@ export default async function DashboardPage({
           
           <Card className="border-border/50 bg-card/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-lg">Where Your Content Comes From</CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Where Your Content Comes From</CardTitle>
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-xs">
+                      <p>Understand where your Instagram content comes from: accounts you follow (Intended), Instagram's algorithm recommendations (Suggested), or paid advertisements (Ads).</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </CardHeader>
             <CardContent>
               <ContentSourcesChart 
@@ -172,8 +188,24 @@ export default async function DashboardPage({
 
           <Card className="border-border/50 bg-card/50 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-lg">How You Engage With Content</CardTitle>
-              <CardDescription>{getEngagementSummary()}</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">How You Engage With Content</CardTitle>
+                  <CardDescription>{getEngagementSummary()}</CardDescription>
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-xs">
+                      <p>See how often you like, save, or click on suggested content and ads. Higher engagement tells Instagram to show you more similar content.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

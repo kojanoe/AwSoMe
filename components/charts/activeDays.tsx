@@ -14,7 +14,7 @@ interface ActiveDaysChartProps {
 type ViewMode = 'activity' | 'content';
 
 export function ActiveDaysChart({ data, contentBreakdown }: ActiveDaysChartProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('activity');
+  const [viewMode, setViewMode] = useState<ViewMode>('content');
 
   const activityData = [0, 1, 2, 3, 4, 5, 6].map(day => ({
     day,
@@ -47,18 +47,18 @@ export function ActiveDaysChart({ data, contentBreakdown }: ActiveDaysChartProps
       {hasContentData && (
         <div className="flex gap-2">
           <Button
-            variant={viewMode === 'activity' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('activity')}
-          >
-            Activity
-          </Button>
-          <Button
             variant={viewMode === 'content' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('content')}
           >
             Content Type
+          </Button>
+          <Button
+            variant={viewMode === 'activity' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('activity')}
+          >
+            Activity
           </Button>
         </div>
       )}
